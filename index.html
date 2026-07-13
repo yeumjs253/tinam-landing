@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TINAM — 나의 웰니스 유형</title>
+<meta name="description" content="체질의학·침구의학 전문 한의사가 감수하는 나의 웰니스 유형 테스트. 3분이면 나에게 맞는 관리 제안을 시작할 수 있습니다." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   TINAM — 랜딩 원페이지 (website/)
+   레퍼런스: milygroup.com 무드 (웜 브라운·오프화이트, 에디토리얼 세리프)
+   주의: design-system/tokens.css 와 독립 — 이 파일만으로 완결.
+   ============================================================ */
+
+:root {
+  /* 웜 팔레트 */
+  --paper: #F4F2ED;        /* 페이지 배경 */
+  --paper-deep: #EDECE8;   /* 네비 필·교차 배경 */
+  --sand: #E3D9CB;         /* 카드·슬롯 베이스 */
+  --tan: #C4A98A;          /* 보조 액센트 */
+  --clay: #9C6B4F;         /* 포인트(라벨·밑줄·넘버) */
+  --ink: #3B2F2A;          /* 제목·강조 */
+  --ink-soft: #6E5F54;     /* 본문 보조 */
+  --line: rgba(59, 47, 42, .14);
+
+  /* 타이포 */
+  --font-serif: "Noto Serif KR", "Nanum Myeongjo", Batang, "Apple SD Gothic Neo", serif;
+  --font-mono: ui-monospace, "SF Mono", "IBM Plex Mono", Menlo, Consolas, monospace;
+
+  /* 모션·간격 (design-system 관례 계승) */
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --radius-pill: 999px;
+  --radius-slot: 24px;
+  --content-max: 1120px;
+  --section-pad: clamp(80px, 12vh, 160px);
+
+  /* SVG 그레인 텍스처 (소재감 — 그라디언트의 매끈함을 죽임) */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- 리셋 ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+
+/* 고정 네비에 섹션 제목이 가려지지 않도록 */
+section[id] { scroll-margin-top: 110px; }
+
+/* ---------- 공용 ---------- */
+.wrap { max-width: var(--content-max); margin: 0 auto; padding: 0 20px; }
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+
+.headline {
+  font-weight: 600;
+  line-height: 1.28;
+  letter-spacing: -0.01em;
+  font-size: clamp(28px, 4.2vw, 44px);
+  margin-top: 18px;
+  word-break: keep-all;
+}
+
+.body-copy {
+  color: var(--ink-soft);
+  margin-top: 20px;
+  max-width: 46ch;
+  word-break: keep-all;
+}
+
+/* 필 버튼 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 14px 26px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--ink);
+  transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out);
+  white-space: nowrap;
+}
+.btn .arrow { transition: transform 200ms var(--ease-out); }
+.btn:hover .arrow { transform: translateX(4px); }
+.btn--outline { color: var(--ink); background: transparent; }
+.btn--outline:hover { background: var(--ink); color: var(--paper); }
+.btn--solid { background: var(--ink); color: var(--paper); }
+.btn--solid:hover { background: #2A211D; }
+
+.micro {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .06em;
+  color: var(--ink-soft);
+  opacity: .85;
+}
+
+/* ============================================================
+   네비게이션 — 떠 있는 필 바
+   모바일: [로고 | CTA] / [메뉴 가로 스크롤 행]
+   데스크톱: [메뉴 5개 | 로고 | CTA] 3열
+   ============================================================ */
+.pillnav {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: calc(100% - 24px);
+  max-width: 1240px;
+  background: rgba(237, 236, 232, .92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(59, 47, 42, .08);
+  border-radius: 28px;
+  box-shadow: 0 2px 12px rgba(59, 47, 42, .06);
+  padding: 12px 18px;
+  display: grid;
+  grid-template-areas: "logo cta" "menu menu";
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.pillnav__logo {
+  grid-area: logo;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: .18em;
+}
+
+.pillnav__menu {
+  grid-area: menu;
+  display: flex;
+  gap: 22px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.pillnav__menu::-webkit-scrollbar { display: none; }
+
+.pillnav__menu a {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  padding: 4px 0;
+  border-bottom: 1px solid transparent;
+  transition: border-color 200ms var(--ease-out), color 200ms var(--ease-out);
+  white-space: nowrap;
+}
+.pillnav__menu a:hover { color: var(--clay); }
+.pillnav__menu a[aria-current="true"] {
+  color: var(--clay);
+  border-bottom-color: var(--clay);
+}
+
+.pillnav__cta { grid-area: cta; padding: 10px 20px; font-size: 12px; }
+
+@media (min-width: 900px) {
+  .pillnav {
+    grid-template-areas: "menu logo cta";
+    grid-template-columns: 1fr auto 1fr;
+    padding: 14px 28px;
+    border-radius: var(--radius-pill);
+  }
+  .pillnav__menu { justify-self: start; overflow: visible; }
+  .pillnav__cta { justify-self: end; }
+}
+
+/* ============================================================
+   히어로
+   ============================================================ */
+.hero {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  padding-top: 120px;
+  padding-bottom: 60px;
+}
+
+/* 웜 그라디언트 블롭 — 정적 캡처에서도 무드를 만드는 배경 */
+.hero::before {
+  content: "";
+  position: absolute;
+  right: -20vw;
+  bottom: -30vh;
+  width: 70vw;
+  height: 90vh;
+  background: radial-gradient(closest-side, rgba(196, 169, 138, .55), rgba(156, 107, 79, .18) 60%, transparent);
+  filter: blur(20px);
+  pointer-events: none;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--grain);
+  opacity: .05;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.hero .wrap { position: relative; z-index: 1; }
+
+.hero__kicker {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+
+.hero__headline {
+  font-weight: 600;
+  font-size: clamp(40px, 7.5vw, 84px);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin-top: 24px;
+  word-break: keep-all;
+}
+
+.hero__sub {
+  color: var(--ink-soft);
+  font-size: clamp(16px, 1.6vw, 19px);
+  margin-top: 28px;
+  max-width: 44ch;
+  word-break: keep-all;
+}
+
+.hero__actions {
+  margin-top: 40px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 24px;
+}
+
+.hero__trust {
+  margin-top: 28px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  opacity: .7;
+}
+
+/* ============================================================
+   교차 섹션 (좌 이미지 / 우 텍스트 ↔ 반대)
+   DOM은 항상 텍스트(body) 먼저 — 접근성·모바일 순서 우선
+   ============================================================ */
+.section { padding: var(--section-pad) 0; }
+.section--deep { background: var(--paper-deep); }
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .split { grid-template-columns: 1fr 1fr; gap: clamp(48px, 6vw, 96px); }
+  /* 기본: 이미지 좌 / 텍스트 우 */
+  .split > .split__body { order: 2; }
+  .split > .img-slot { order: 1; }
+  /* 반전: 텍스트 좌 / 이미지 우 */
+  .split--flip > .split__body { order: 1; }
+  .split--flip > .img-slot { order: 2; }
+}
+
+/* ---------- 이미지 슬롯 (사진 대체 3층: 그라디언트+그레인+라인아트) ---------- */
+.img-slot {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-slot);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (min-width: 900px) { .img-slot { aspect-ratio: 4 / 5; } }
+
+.img-slot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--grain);
+  opacity: .07;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.img-slot--clay {
+  background:
+    radial-gradient(120% 90% at 20% 15%, #C4A98A 0%, transparent 55%),
+    radial-gradient(110% 100% at 85% 90%, #7E5540 0%, transparent 60%),
+    linear-gradient(160deg, #B08968 0%, #9C6B4F 55%, #8A5C42 100%);
+}
+.img-slot--sand {
+  background:
+    radial-gradient(110% 80% at 80% 10%, #EFE7D9 0%, transparent 55%),
+    radial-gradient(120% 100% at 15% 95%, #BFA989 0%, transparent 60%),
+    linear-gradient(200deg, #E3D9CB 0%, #D3C2A8 60%, #CBB89F 100%);
+}
+.img-slot--stone {
+  background:
+    radial-gradient(110% 85% at 25% 12%, #C9BEAF 0%, transparent 55%),
+    radial-gradient(130% 100% at 90% 90%, #77685A 0%, transparent 60%),
+    linear-gradient(150deg, #B5A897 0%, #9C8F7E 60%, #8F8172 100%);
+}
+
+.img-slot__art {
+  width: 58%;
+  height: auto;
+  opacity: .85;
+}
+.img-slot__art path,
+.img-slot__art circle,
+.img-slot__art line,
+.img-slot__art ellipse {
+  fill: none;
+  stroke: #3B2F2A;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.img-slot--clay .img-slot__art path,
+.img-slot--clay .img-slot__art circle,
+.img-slot--clay .img-slot__art line,
+.img-slot--clay .img-slot__art ellipse,
+.img-slot--stone .img-slot__art path,
+.img-slot--stone .img-slot__art circle,
+.img-slot--stone .img-slot__art line,
+.img-slot--stone .img-slot__art ellipse { stroke: #F4F2ED; }
+
+/* ---------- 공감 카드 (For who) — 에디토리얼 헤어라인 톤 ---------- */
+.empathy { margin-top: 32px; display: grid; gap: 14px; }
+.empathy__card {
+  border: 1px solid var(--line);
+  background: rgba(244, 242, 237, .6);
+  border-radius: 16px;
+  padding: 22px 24px;
+}
+.empathy__tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+.empathy__card h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-top: 8px;
+  word-break: keep-all;
+}
+.empathy__card p {
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin-top: 8px;
+  word-break: keep-all;
+}
+
+/* ---------- 넘버드 스텝 (What to do) ---------- */
+.steps { margin-top: 36px; display: grid; gap: 0; }
+.steps li {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 18px;
+  padding: 24px 0;
+  border-top: 1px solid var(--line);
+}
+.steps li:last-child { border-bottom: 1px solid var(--line); }
+.steps .num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: .1em;
+  color: var(--clay);
+  padding-top: 5px;
+}
+.steps h3 { font-size: 19px; font-weight: 600; word-break: keep-all; }
+.steps p { font-size: 14px; color: var(--ink-soft); margin-top: 8px; word-break: keep-all; }
+.steps .meta {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--tan);
+  margin-top: 10px;
+}
+
+.split__cta { margin-top: 36px; }
+
+/* ============================================================
+   Article — 카드 3장 그리드 (교차 리듬 사이의 변화)
+   ============================================================ */
+.article-head { text-align: center; max-width: 640px; margin: 0 auto; }
+.article-grid {
+  margin-top: 56px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+}
+@media (min-width: 900px) { .article-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.article-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-slot);
+  overflow: hidden;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+}
+.article-card__thumb {
+  position: relative;
+  aspect-ratio: 16 / 10;
+}
+.article-card__thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--grain);
+  opacity: .07;
+  mix-blend-mode: multiply;
+}
+.article-card__body { padding: 24px; flex: 1; display: flex; flex-direction: column; }
+.article-card__cat {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+.article-card h3 {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin-top: 10px;
+  word-break: keep-all;
+  flex: 1;
+}
+.article-card .soon {
+  display: inline-block;
+  align-self: flex-start;
+  margin-top: 18px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .16em;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   Contact
+   ============================================================ */
+.contact-links { margin-top: 32px; display: grid; gap: 10px; }
+.contact-links a {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: .1em;
+  color: var(--ink);
+  border-bottom: 1px solid transparent;
+  width: fit-content;
+  transition: color 200ms var(--ease-out);
+}
+.contact-links a:hover { color: var(--clay); }
+.contact-links .k { color: var(--ink-soft); margin-right: 12px; font-size: 11px; letter-spacing: .16em; }
+
+/* ============================================================
+   푸터
+   ============================================================ */
+.footer {
+  border-top: 1px solid var(--line);
+  padding: 48px 0 64px;
+  text-align: center;
+}
+.footer .disclaimer {
+  font-size: 13px;
+  color: var(--ink-soft);
+  word-break: keep-all;
+}
+.footer .copyright {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--tan);
+  margin-top: 16px;
+}
+.footer .top-link {
+  display: inline-block;
+  margin-top: 24px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .16em;
+  color: var(--ink-soft);
+}
+.footer .top-link:hover { color: var(--clay); }
+
+/* ============================================================
+   등장 리빌 — JS가 있을 때만 숨김 (html.js 게이트: JS 실패 시 백지 방지)
+   히어로는 리빌 대상 제외(정적 캡처 대비)
+   ============================================================ */
+html.js .reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 500ms var(--ease-out), transform 500ms var(--ease-out);
+}
+html.js .reveal.is-visible { opacity: 1; transform: none; }
+
+/* ---------- 모션 최소화 대응 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  html.js .reveal { opacity: 1; transform: none; transition: none; }
+  .btn, .btn .arrow, .pillnav__menu a { transition: none; }
+}
+
+</style>
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<!-- ===== 떠 있는 필 네비 ===== -->
+<nav class="pillnav" aria-label="주 메뉴">
+  <a class="pillnav__logo" href="#hero">TINAM</a>
+  <ul class="pillnav__menu">
+    <li><a href="#about">About us</a></li>
+    <li><a href="#for-who">For who</a></li>
+    <li><a href="#what-to-do">What to do</a></li>
+    <li><a href="#article">Article</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a class="pillnav__cta btn btn--outline" href="demo.html">Start test <span class="arrow">→</span></a>
+</nav>
+
+<main>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="hero">
+  <div class="wrap">
+    <p class="hero__kicker">Personal wellness type</p>
+    <h1 class="hero__headline">당신만의 웰니스 유형,<br />3분이면 찾습니다</h1>
+    <p class="hero__sub">체질의학·침구의학 전문 한의사가 감수한 웰니스 유형 테스트로, 수많은 정보 속에서 헤매지 말고 나에게 맞는 관리 제안부터 시작하세요.</p>
+    <div class="hero__actions">
+      <a class="btn btn--solid" href="demo.html">3분 만에 내 유형 찾기 <span class="arrow">→</span></a>
+      <span class="micro">회원가입 없이, 지금 바로 · 방문 없이 온라인에서 끝</span>
+    </div>
+    <p class="hero__trust">Supervised by Korean medicine doctor · 한의사 감수</p>
+  </div>
+</section>
+
+<!-- ===== ABOUT US : 좌 이미지 / 우 텍스트 ===== -->
+<section class="section section--deep" id="about">
+  <div class="wrap split reveal">
+    <div class="split__body">
+      <p class="label">About us</p>
+      <h2 class="headline">영양제를 파는 앱이 아니라,<br />나를 아는 것에서 시작합니다</h2>
+      <p class="body-copy">TINAM은 한의사가 감수하는 웰니스 유형 분류와 라이프스타일 큐레이션 서비스입니다. 누구에게나 같은 조언 대신, 내 유형에서 출발한 나만의 관리 제안을 만듭니다.</p>
+      <p class="body-copy">검사지 같은 화면도, 어려운 용어도 없습니다. 재미있게 응시하고, 가볍게 공유하고, 그 결과가 일상의 기준이 되도록 — 그게 우리가 웰니스를 다루는 방식입니다.</p>
+    </div>
+    <div class="img-slot img-slot--clay" role="img" aria-label="잎맥 라인아트 일러스트">
+      <!-- 잎맥 — 자연 소재 판화 느낌 -->
+      <svg class="img-slot__art" viewBox="0 0 200 260" aria-hidden="true">
+        <path d="M100 245 C 60 190, 52 130, 68 78 C 80 40, 94 22, 100 12 C 106 22, 120 40, 132 78 C 148 130, 140 190, 100 245 Z" />
+        <path d="M100 238 L 100 24" />
+        <path d="M100 200 C 86 192, 74 180, 68 166" />
+        <path d="M100 200 C 114 192, 126 180, 132 166" />
+        <path d="M100 160 C 87 152, 77 141, 72 128" />
+        <path d="M100 160 C 113 152, 123 141, 128 128" />
+        <path d="M100 120 C 90 113, 83 104, 79 93" />
+        <path d="M100 120 C 110 113, 117 104, 121 93" />
+        <path d="M100 82 C 93 76, 88 69, 85 61" />
+        <path d="M100 82 C 107 76, 112 69, 115 61" />
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOR WHO : 좌 텍스트 / 우 이미지 ===== -->
+<section class="section" id="for-who">
+  <div class="wrap split split--flip reveal">
+    <div class="split__body">
+      <p class="label">For who</p>
+      <h2 class="headline">혹시, 이런 마음<br />있지 않으신가요?</h2>
+      <div class="empathy">
+        <div class="empathy__card">
+          <span class="empathy__tag">01</span>
+          <h3>정보는 많은데 내 것은 없다</h3>
+          <p>영양제·운동법을 검색하면 수백 개의 조합이 쏟아지지만, 정작 "나에게 맞는 한 가지"는 끝까지 찾지 못한 채 창을 닫은 적, 있으실 거예요.</p>
+        </div>
+        <div class="empathy__card">
+          <span class="empathy__tag">02</span>
+          <h3>나만의 루틴은 아직</h3>
+          <p>운동 한 번, 명상 앱 하나씩은 다운받아 봤지만 "이게 내 루틴이다" 싶은 건 아직 없달까요.</p>
+        </div>
+        <div class="empathy__card">
+          <span class="empathy__tag">03</span>
+          <h3>다들 잘하는데 나만 보여줄 게 없다</h3>
+          <p>SNS에 웰니스 루틴 인증하는 사람들 보면 괜히 부럽고, 나도 "이거 내 시그니처 루틴이야" 하고 말할 수 있는 나만의 이야기가 하나쯤 있었으면 싶습니다.</p>
+        </div>
+      </div>
+    </div>
+    <div class="img-slot img-slot--sand" role="img" aria-label="쌓인 조약돌 라인아트 일러스트">
+      <!-- 겹쳐 쌓인 조약돌 — 균형·안정 -->
+      <svg class="img-slot__art" viewBox="0 0 200 260" aria-hidden="true">
+        <path d="M40 218 C 40 196, 66 184, 100 184 C 134 184, 160 196, 160 218 C 160 236, 134 244, 100 244 C 66 244, 40 236, 40 218 Z" />
+        <path d="M54 156 C 54 138, 74 128, 100 128 C 126 128, 146 138, 146 156 C 146 172, 126 180, 100 180 C 74 180, 54 172, 54 156 Z" />
+        <path d="M66 104 C 66 90, 81 82, 100 82 C 119 82, 134 90, 134 104 C 134 116, 119 124, 100 124 C 81 124, 66 116, 66 104 Z" />
+        <path d="M78 58 C 78 48, 88 42, 100 42 C 112 42, 122 48, 122 58 C 122 68, 112 74, 100 74 C 88 74, 78 68, 78 58 Z" />
+        <path d="M92 22 C 92 17, 96 14, 100 14 C 104 14, 108 17, 108 22 C 108 27, 104 30, 100 30 C 96 30, 92 27, 92 22 Z" />
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WHAT TO DO : 좌 이미지 / 우 텍스트 + CTA ===== -->
+<section class="section section--deep" id="what-to-do">
+  <div class="wrap split reveal">
+    <div class="split__body">
+      <p class="label">What to do</p>
+      <h2 class="headline">3분이면,<br />이렇게 달라집니다</h2>
+      <ol class="steps">
+        <li>
+          <span class="num">01</span>
+          <div>
+            <h3>3분 웰니스 유형 테스트</h3>
+            <p>한의사 전문의가 설계한 짧은 질문들로 나만의 웰니스 유형을 확인합니다.</p>
+            <span class="meta">평균 소요시간 3분 · 문항 00개</span>
+          </div>
+        </li>
+        <li>
+          <span class="num">02</span>
+          <div>
+            <h3>하나뿐인 나만의 라이프스타일 가이드</h3>
+            <p>같은 조언이 아니라, 내 유형에 맞춰 걸러진 식습관·움직임·환경 팁만 보여드립니다.</p>
+            <span class="meta">유형별 맞춤 콘텐츠 00개 이상</span>
+          </div>
+        </li>
+        <li>
+          <span class="num">03</span>
+          <div>
+            <h3>검증된 곳으로 한 번에 연결</h3>
+            <p>내 유형에 맞는 제품·장소를 일일이 비교하지 않아도, 필요한 만큼만 골라 드립니다.</p>
+            <span class="meta">제휴 파트너 00곳과 연결 (예정)</span>
+          </div>
+        </li>
+      </ol>
+      <div class="split__cta">
+        <a class="btn btn--outline" href="demo.html">내 유형 확인하러 가기 <span class="arrow">→</span></a>
+      </div>
+    </div>
+    <div class="img-slot img-slot--stone" role="img" aria-label="흐르는 물결 라인아트 일러스트">
+      <!-- 흐르는 물결 3선 — 흐름·리듬 -->
+      <svg class="img-slot__art" viewBox="0 0 200 260" aria-hidden="true">
+        <path d="M20 84 C 50 62, 80 62, 100 84 C 120 106, 150 106, 180 84" />
+        <path d="M20 132 C 50 110, 80 110, 100 132 C 120 154, 150 154, 180 132" />
+        <path d="M20 180 C 50 158, 80 158, 100 180 C 120 202, 150 202, 180 180" />
+        <circle cx="100" cy="36" r="10" />
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ARTICLE : 카드 3장 ===== -->
+<section class="section" id="article">
+  <div class="wrap reveal">
+    <div class="article-head">
+      <p class="label">Article</p>
+      <h2 class="headline">천천히 읽는 웰니스</h2>
+      <p class="body-copy" style="margin-left:auto; margin-right:auto;">내 유형을 아는 것에서 한 걸음 더 — 일상에 스며드는 웰니스 이야기를 준비하고 있습니다.</p>
+    </div>
+    <div class="article-grid">
+      <article class="article-card">
+        <div class="article-card__thumb img-slot--clay"></div>
+        <div class="article-card__body">
+          <span class="article-card__cat">Morning routine</span>
+          <h3>아침의 몸은 왜 저마다 다를까 — 유형별 기상 루틴</h3>
+          <span class="soon">Coming soon</span>
+        </div>
+      </article>
+      <article class="article-card">
+        <div class="article-card__thumb img-slot--sand"></div>
+        <div class="article-card__body">
+          <span class="article-card__cat">Daily fatigue</span>
+          <h3>검진은 정상인데 늘 피곤한 사람들을 위한 안내</h3>
+          <span class="soon">Coming soon</span>
+        </div>
+      </article>
+      <article class="article-card">
+        <div class="article-card__thumb img-slot--stone"></div>
+        <div class="article-card__body">
+          <span class="article-card__cat">Seasonal table</span>
+          <h3>내 유형에 맞는 계절 식탁</h3>
+          <span class="soon">Coming soon</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONTACT : 좌 텍스트 / 우 이미지 ===== -->
+<section class="section section--deep" id="contact">
+  <div class="wrap split split--flip reveal">
+    <div class="split__body">
+      <p class="label">Contact</p>
+      <h2 class="headline">아직 나만의 방법을 못 찾으셨다면,<br />지금 3분이 그 시작이 될 수 있습니다</h2>
+      <p class="body-copy">테스트는 회원가입 없이 무료로 진행돼요. 결과를 공유하고 싶다면 구글 또는 카카오로 간편하게 로그인해주세요.</p>
+      <div class="split__cta">
+        <a class="btn btn--solid" href="demo.html">무료로 내 웰니스 유형 확인하기 <span class="arrow">→</span></a>
+      </div>
+      <div class="contact-links">
+        <a href="mailto:hello@tinam.kr"><span class="k">MAIL</span>hello@tinam.kr</a>
+        <a href="#contact"><span class="k">INSTAGRAM</span>@tinam.official</a>
+      </div>
+    </div>
+    <div class="img-slot img-slot--clay" role="img" aria-label="떠오르는 해 라인아트 일러스트">
+      <!-- 지평선 위로 떠오르는 해 — 시작 -->
+      <svg class="img-slot__art" viewBox="0 0 200 260" aria-hidden="true">
+        <path d="M56 156 A 44 44 0 0 1 144 156" />
+        <line x1="20" y1="156" x2="180" y2="156" />
+        <line x1="100" y1="88" x2="100" y2="72" />
+        <line x1="58" y1="104" x2="47" y2="93" />
+        <line x1="142" y1="104" x2="153" y2="93" />
+        <line x1="36" y1="146" x2="21" y2="142" />
+        <line x1="164" y1="146" x2="179" y2="142" />
+        <path d="M32 190 C 56 178, 88 178, 100 190 C 112 202, 144 202, 168 190" />
+        <path d="M44 216 C 64 206, 92 206, 100 216 C 108 226, 136 226, 156 216" />
+      </svg>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===== 푸터 ===== -->
+<footer class="footer">
+  <div class="wrap">
+    <p class="disclaimer">본 결과는 참고용 유형 분류이며 의료 행위가 아닙니다.</p>
+    <p class="copyright">© 2026 TINAM · Wellness type test demo</p>
+    <a class="top-link" href="#hero">Back to top ↑</a>
+  </div>
+</footer>
+<script>
+/* TINAM 랜딩 — scrollspy + 등장 리빌
+   html.js 클래스는 <head> 인라인 스니펫이 부여(FOUC·JS 실패 대비 게이트).
+   마이크로인터랙션 지침: 리빌·스크롤스파이·CTA 호버(CSS) 3곳 이내 유지. */
+(function () {
+  'use strict';
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- 1. 등장 리빌 (1회성) ---------- */
+  var reveals = document.querySelectorAll('.reveal');
+  if (reduceMotion || !('IntersectionObserver' in window)) {
+    reveals.forEach(function (el) { el.classList.add('is-visible'); });
+  } else {
+    var revealObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    reveals.forEach(function (el) { revealObserver.observe(el); });
+  }
+
+  /* ---------- 2. Scrollspy — 현재 섹션 네비 하이라이트 ---------- */
+  var links = document.querySelectorAll('.pillnav__menu a[href^="#"]');
+  var linkById = {};
+  links.forEach(function (a) { linkById[a.getAttribute('href').slice(1)] = a; });
+
+  var sections = [];
+  Object.keys(linkById).forEach(function (id) {
+    var sec = document.getElementById(id);
+    if (sec) sections.push(sec);
+  });
+
+  function setCurrent(id) {
+    links.forEach(function (a) { a.removeAttribute('aria-current'); });
+    if (id && linkById[id]) linkById[id].setAttribute('aria-current', 'true');
+  }
+
+  if ('IntersectionObserver' in window && sections.length) {
+    var visible = {};
+    var spyObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        visible[entry.target.id] = entry.isIntersecting ? entry.intersectionRatio : 0;
+      });
+      var best = null, bestRatio = 0;
+      sections.forEach(function (sec) {
+        var r = visible[sec.id] || 0;
+        if (r > bestRatio) { bestRatio = r; best = sec.id; }
+      });
+      setCurrent(best);
+    }, { threshold: [0.15, 0.4, 0.7], rootMargin: '-96px 0px 0px 0px' });
+    sections.forEach(function (sec) { spyObserver.observe(sec); });
+  }
+
+  /* 메뉴 클릭 시 즉시 하이라이트 (스크롤 도착 전 피드백) */
+  links.forEach(function (a) {
+    a.addEventListener('click', function () {
+      setCurrent(a.getAttribute('href').slice(1));
+    });
+  });
+})();
+
+</script>
+</body>
+</html>
