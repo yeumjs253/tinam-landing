@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>TINAM — 웰니스 유형 테스트</title>
 <meta name="description" content="짧은 질문에 답하면 나의 웰니스 유형과 관리 제안을 정리해 드려요. 구동 테스트용 데모(감수 전 가안)." />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
 <style>
 /* ============================================================
    TINAM — 랜딩 원페이지 (website/)
@@ -26,9 +24,9 @@
   --ink-soft: #6E5F54;     /* 본문 보조 */
   --line: rgba(59, 47, 42, .14);
 
-  /* 타이포 */
-  --font-serif: "Noto Serif KR", "Nanum Myeongjo", Batang, "Apple SD Gothic Neo", serif;
-  --font-mono: ui-monospace, "SF Mono", "IBM Plex Mono", Menlo, Consolas, monospace;
+  /* 타이포 — 전 서체 Pretendard 통일 (변수명은 역할 구분용으로 유지) */
+  --font-serif: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-mono: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
 
   /* 모션·간격 (design-system 관례 계승) */
   --ease-out: cubic-bezier(.16, 1, .3, 1);
