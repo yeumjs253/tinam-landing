@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>TINAM · 웰니스 유형 테스트 (단일 파일 데모)</title>
+<meta name="description" content="체질의학·침구의학 전문 한의사 감수 · 웰니스 유형 테스트 데모(단일 파일)" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+<style>
+/* ============================================================================
+   TINAM — 웰니스 유형 테스트 데모 (웜 에디토리얼 무드, 자체완결)
+   레퍼런스: tinam-landing/demo.html (milygroup 무드 · 웜 브라운·오프화이트)
+   - 랜딩(히어로/About/For who/What to do/Article/Contact) + 설문 플로우 통합.
+   - 유형 4색 = 감수 확정 브랜드색(스틸블루/다홍/그린올리브/레몬), 레몬은 가독성 위해 골드-레몬으로 심화.
+   - design-system/*.css 와 독립(이 파일만으로 완결).
+   ============================================================================ */
+
+:root {
+  /* 웜 팔레트 */
+  --paper: #F4F2ED;
+  --paper-deep: #EDECE8;
+  --sand: #E3D9CB;
+  --tan: #C4A98A;
+  --clay: #9C6B4F;
+  --ink: #3B2F2A;
+  --ink-soft: #6E5F54;
+  --line: rgba(59, 47, 42, .14);
+
+  --font-serif: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-mono: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --radius-pill: 999px;
+  --radius-slot: 24px;
+  --content-max: 1120px;
+  --section-pad: clamp(72px, 11vh, 150px);
+
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  /* 유형별 팔레트 — 감수 확정 브랜드색(태양=스틸블루·소양=다홍·태음=그린올리브·소음=레몬) */
+  --t-taeyang: #4E7CA1; --t-taeyang-weak: #E7EEF4; --t-taeyang-ink: #34526E;
+  --t-soyang:  #D63A26; --t-soyang-weak:  #F6E2DE; --t-soyang-ink:  #9E2C1B;
+  --t-taeeum:  #74893A; --t-taeeum-weak:  #ECEFDF; --t-taeeum-ink:  #4F6425;
+  --t-soeum:   #C79A16; --t-soeum-weak:   #F5ECCF; --t-soeum-ink:   #8F6E08;
+}
+
+/* ---------- 리셋 ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink);
+  background: var(--paper);
+  min-height: 100svh;
+  -webkit-font-smoothing: antialiased;
+}
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+section[id] { scroll-margin-top: 110px; }
+
+/* ---------- 공용 ---------- */
+.wrap { max-width: var(--content-max); margin: 0 auto; padding: 0 20px; }
+.label { font-family: var(--font-mono); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--clay); }
+.headline { font-weight: 600; line-height: 1.28; letter-spacing: -0.01em; font-size: clamp(28px, 4.2vw, 44px); margin-top: 18px; word-break: keep-all; }
+.body-copy { color: var(--ink-soft); margin-top: 20px; max-width: 46ch; word-break: keep-all; }
+.micro { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; color: var(--ink-soft); opacity: .85; }
+
+/* 필 버튼 */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-mono); font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+  padding: 14px 26px; border-radius: var(--radius-pill); border: 1px solid var(--ink);
+  cursor: pointer; background: transparent; color: var(--ink);
+  transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out);
+  white-space: nowrap;
+}
+.btn .arrow { transition: transform 200ms var(--ease-out); }
+.btn:hover .arrow { transform: translateX(4px); }
+.btn--outline { color: var(--ink); background: transparent; }
+.btn--outline:hover { background: var(--ink); color: var(--paper); }
+.btn--solid { background: var(--ink); color: var(--paper); }
+.btn--solid:hover { background: #2A211D; }
+/* CTA 확대 — 본문 전환 버튼(히어로·What to do·Contact) 전용. 네비 필바는 높이가 틀어져 제외 */
+.btn--lg { font-size: 15px; letter-spacing: .1em; padding: 19px 38px; gap: 12px; }
+@media (max-width: 640px) { .btn--lg { width: 100%; justify-content: center; } }
+
+/* ============================================================ 네비 (떠 있는 필 바) */
+.pillnav {
+  position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 100;
+  width: calc(100% - 24px); max-width: 1240px;
+  background: rgba(237, 236, 232, .92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(59, 47, 42, .08); border-radius: 28px; box-shadow: 0 2px 12px rgba(59, 47, 42, .06);
+  padding: 12px 18px; display: grid;
+  grid-template-areas: "logo cta" "menu menu"; grid-template-columns: 1fr auto; align-items: center; gap: 8px 12px;
+}
+.pillnav__logo { grid-area: logo; font-weight: 600; font-size: 20px; letter-spacing: .18em; cursor: pointer; }
+.pillnav__menu { grid-area: menu; display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.pillnav__menu::-webkit-scrollbar { display: none; }
+.pillnav__menu a { font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); padding: 4px 0; border-bottom: 1px solid transparent; transition: border-color 200ms var(--ease-out), color 200ms var(--ease-out); white-space: nowrap; }
+.pillnav__menu a:hover { color: var(--clay); }
+.pillnav__cta { grid-area: cta; padding: 10px 20px; font-size: 12px; }
+@media (min-width: 900px) {
+  .pillnav { grid-template-areas: "menu logo cta"; grid-template-columns: 1fr auto 1fr; padding: 14px 28px; border-radius: var(--radius-pill); }
+  .pillnav__menu { justify-self: start; overflow: visible; }
+  .pillnav__cta { justify-self: end; }
+}
+
+/* ============================================================ 히어로 */
+.hero { min-height: 100svh; display: flex; align-items: center; position: relative; overflow: hidden; padding-top: 120px; padding-bottom: 60px; }
+.hero::before { content: ""; position: absolute; right: -20vw; bottom: -30vh; width: 70vw; height: 90vh; background: radial-gradient(closest-side, rgba(196, 169, 138, .55), rgba(156, 107, 79, .18) 60%, transparent); filter: blur(20px); pointer-events: none; }
+.hero::after { content: ""; position: absolute; inset: 0; background-image: var(--grain); opacity: .05; mix-blend-mode: multiply; pointer-events: none; }
+.hero .wrap { position: relative; z-index: 1; }
+.hero__kicker { font-family: var(--font-mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--clay); }
+.hero__headline { font-weight: 600; font-size: clamp(40px, 7.5vw, 84px); line-height: 1.12; letter-spacing: -0.01em; margin-top: 24px; word-break: keep-all; }
+.hero__sub { color: var(--ink-soft); font-size: clamp(16px, 1.6vw, 19px); margin-top: 28px; max-width: 44ch; word-break: keep-all; }
+.hero__actions { margin-top: 40px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; }
+.hero__trust { margin-top: 28px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); opacity: .7; }
+
+/* ============================================================ 교차 섹션 */
+.section { padding: var(--section-pad) 0; }
+.section--deep { background: var(--paper-deep); }
+.split { display: grid; grid-template-columns: 1fr; gap: 40px; align-items: center; }
+@media (min-width: 900px) {
+  .split { grid-template-columns: 1fr 1fr; gap: clamp(48px, 6vw, 96px); }
+  .split > .split__body { order: 2; }
+  .split > .img-slot { order: 1; }
+  .split--flip > .split__body { order: 1; }
+  .split--flip > .img-slot { order: 2; }
+}
+.img-slot { position: relative; aspect-ratio: 4 / 3; border-radius: var(--radius-slot); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+@media (min-width: 900px) { .img-slot { aspect-ratio: 4 / 5; } }
+.img-slot::after { content: ""; position: absolute; inset: 0; background-image: var(--grain); opacity: .07; mix-blend-mode: multiply; pointer-events: none; }
+.img-slot--clay { background: radial-gradient(120% 90% at 20% 15%, #C4A98A 0%, transparent 55%), radial-gradient(110% 100% at 85% 90%, #7E5540 0%, transparent 60%), linear-gradient(160deg, #B08968 0%, #9C6B4F 55%, #8A5C42 100%); }
+.img-slot--sand { background: radial-gradient(110% 80% at 80% 10%, #EFE7D9 0%, transparent 55%), radial-gradient(120% 100% at 15% 95%, #BFA989 0%, transparent 60%), linear-gradient(200deg, #E3D9CB 0%, #D3C2A8 60%, #CBB89F 100%); }
+/* 사진 삽입 자리 — <img>를 넣으면 그대로 채워진다 */
+.img-slot--photo { background: var(--paper-deep); border: 1px dashed rgba(59, 47, 42, .28); }
+.img-slot--photo > img { width: 100%; height: 100%; object-fit: cover; }
+.img-slot__ph { font-family: var(--font-mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); opacity: .7; }
+.img-slot__art { width: 62%; height: auto; opacity: .92; }
+.img-slot__art path, .img-slot__art circle, .img-slot__art line, .img-slot__art ellipse, .img-slot__art polyline { fill: none; stroke: #F4F2ED; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* 공감 카드 */
+.empathy { margin-top: 32px; display: grid; gap: 14px; }
+.empathy__card { border: 1px solid var(--line); background: rgba(244, 242, 237, .6); border-radius: 16px; padding: 22px 24px; }
+.empathy__tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--clay); }
+.empathy__card h3 { font-size: 17px; font-weight: 600; margin-top: 8px; word-break: keep-all; }
+.empathy__card p { font-size: 14px; color: var(--ink-soft); margin-top: 8px; word-break: keep-all; }
+
+/* 2톤 영문 선언 — 대문자 진하게 / 소문자 연하게 */
+.tt { color: var(--ink-soft); font-weight: 400; }
+.tt b { color: var(--ink); font-weight: 700; }
+/* About us — 선언 블록 2개 사이 구분 여백 */
+.about-block + .about-block { margin-top: clamp(48px, 6vw, 72px); }
+/* For who — 공감카드 대신 한 줄 선언 */
+.forwho-lead { font-size: clamp(26px, 3.4vw, 38px); font-weight: 600; line-height: 1.35; letter-spacing: -0.01em; margin-top: 40px; word-break: keep-all; }
+
+/* 넘버드 스텝 */
+.steps { margin-top: 36px; display: grid; gap: 0; }
+.steps li { display: grid; grid-template-columns: 56px 1fr; gap: 18px; padding: 24px 0; border-top: 1px solid var(--line); }
+.steps li:last-child { border-bottom: 1px solid var(--line); }
+.steps .num { font-family: var(--font-mono); font-size: 13px; letter-spacing: .1em; color: var(--clay); padding-top: 5px; }
+.steps h3 { font-size: 19px; font-weight: 600; word-break: keep-all; }
+.steps p { font-size: 14px; color: var(--ink-soft); margin-top: 8px; word-break: keep-all; }
+.steps .meta { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--tan); margin-top: 10px; }
+.split__cta { margin-top: 36px; }
+
+/* Article 카드 */
+.article-head { text-align: center; max-width: 640px; margin: 0 auto; }
+.article-grid { margin-top: 56px; display: grid; grid-template-columns: 1fr; gap: 28px; }
+@media (min-width: 900px) { .article-grid { grid-template-columns: repeat(3, 1fr); } }
+.article-card { border: 1px solid var(--line); border-radius: var(--radius-slot); overflow: hidden; background: var(--paper); display: flex; flex-direction: column; }
+.article-card__thumb { position: relative; aspect-ratio: 16 / 10; }
+.article-card__thumb::after { content: ""; position: absolute; inset: 0; background-image: var(--grain); opacity: .07; mix-blend-mode: multiply; }
+.article-card__body { padding: 24px; flex: 1; display: flex; flex-direction: column; }
+.article-card__cat { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--clay); }
+.article-card h3 { font-size: 19px; font-weight: 600; line-height: 1.45; margin-top: 10px; word-break: keep-all; flex: 1; }
+.article-card .soon { display: inline-block; align-self: flex-start; margin-top: 18px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; padding: 5px 12px; border: 1px solid var(--line); border-radius: var(--radius-pill); color: var(--ink-soft); }
+
+/* Contact / 푸터 */
+.contact-links { margin-top: 32px; display: grid; gap: 10px; }
+.contact-links a { font-family: var(--font-mono); font-size: 13px; letter-spacing: .1em; color: var(--ink); width: fit-content; transition: color 200ms var(--ease-out); }
+.contact-links a:hover { color: var(--clay); }
+.contact-links .k { color: var(--ink-soft); margin-right: 12px; font-size: 11px; letter-spacing: .16em; }
+.site-footer { border-top: 1px solid var(--line); padding: 48px 0 64px; text-align: center; }
+.site-footer .disclaimer { font-size: 13px; color: var(--ink-soft); word-break: keep-all; }
+.site-footer .copyright { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--tan); margin-top: 16px; }
+
+/* 등장 리빌 */
+html.js .reveal { opacity: 0; transform: translateY(12px); transition: opacity 500ms var(--ease-out), transform 500ms var(--ease-out); }
+html.js .reveal.is-visible { opacity: 1; transform: none; }
+
+/* ============================================================ 설문 앱 (화면 전환) */
+#site[hidden] { display: none; }
+#app[hidden] { display: none; }
+.testbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; pointer-events: none; }
+.testbar a, .testbar span { pointer-events: auto; }
+.testbar__logo { font-weight: 600; font-size: 17px; letter-spacing: .18em; cursor: pointer; }
+.testbar__flag { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 5px 12px; background: rgba(244, 242, 237, .8); }
+
+.progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--line); z-index: 110; }
+.progress[hidden] { display: none; }
+.progress__bar { height: 100%; width: 0; background: var(--clay); transition: width 300ms var(--ease-out); }
+
+.screen { display: none; }
+.screen.is-active { display: block; }
+.stage { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; max-width: 640px; margin: 0 auto; padding: 96px 22px 64px; }
+
+/* 인트로 */
+.intro__headline { font-weight: 600; font-size: clamp(32px, 7vw, 52px); line-height: 1.2; letter-spacing: -0.01em; margin-top: 18px; word-break: keep-all; }
+.notice { margin-top: 28px; border: 1px solid var(--line); border-radius: 16px; padding: 16px 20px; font-size: 13px; color: var(--ink-soft); background: rgba(244, 242, 237, .6); word-break: keep-all; }
+.notice b { color: var(--ink); font-weight: 600; }
+.intro__meta { margin-top: 24px; display: grid; gap: 0; }
+.intro__meta .row { display: flex; gap: 14px; align-items: baseline; font-size: 14px; color: var(--ink-soft); padding: 12px 0; border-top: 1px solid var(--line); }
+.intro__meta .row:last-child { border-bottom: 1px solid var(--line); }
+.intro__meta .row b { color: var(--ink); font-weight: 600; min-width: 88px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; }
+
+/* 퀴즈 */
+.quiz__part { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--tan); }
+.quiz__count { font-family: var(--font-mono); font-size: 12px; letter-spacing: .2em; color: var(--clay); margin-top: 6px; }
+.quiz__q { font-weight: 600; font-size: clamp(23px, 5.2vw, 36px); line-height: 1.35; margin-top: 14px; word-break: keep-all; min-height: 2.6em; }
+.quiz__opts { margin-top: 32px; display: grid; gap: 12px; }
+.quiz-opt { display: flex; align-items: center; gap: 16px; width: 100%; text-align: left; font-family: var(--font-serif); font-size: 16px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 16px; padding: 17px 20px; cursor: pointer; transition: border-color 200ms var(--ease-out), background-color 200ms var(--ease-out); word-break: keep-all; }
+.quiz-opt__key { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; color: var(--clay); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 4px 10px; flex-shrink: 0; }
+.quiz-opt:hover { border-color: var(--clay); }
+.quiz-opt.is-selected { border-color: var(--ink); background: var(--paper-deep); }
+.quiz__back { margin-top: 30px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); background: none; border: none; cursor: pointer; padding: 6px 0; }
+.quiz__back:hover { color: var(--clay); }
+
+/* 로딩 */
+.loading { text-align: center; }
+.loading__orb { width: 72px; height: 72px; margin: 0 auto; border: 1.5px solid var(--clay); border-radius: 50%; animation: breathe 1.8s var(--ease-out) infinite; }
+@keyframes breathe { 0%, 100% { transform: scale(1); opacity: .5; } 50% { transform: scale(1.15); opacity: 1; } }
+.loading__t { margin-top: 28px; font-weight: 600; font-size: 20px; }
+.loading__d { margin-top: 10px; font-size: 14px; color: var(--ink-soft); }
+
+/* 결과 카드 */
+.result-card { position: relative; border-radius: var(--radius-slot); overflow: hidden; padding: 48px 32px; text-align: center; color: #F7F4EF; }
+.result-card::after { content: ""; position: absolute; inset: 0; background-image: var(--grain); opacity: .08; mix-blend-mode: multiply; pointer-events: none; }
+.result-card > * { position: relative; z-index: 1; }
+.result-card--taeyang { background: radial-gradient(120% 100% at 20% 10%, #6E97B8 0%, transparent 55%), linear-gradient(160deg, #4E7CA1 0%, #34526E 100%); }
+.result-card--soyang  { background: radial-gradient(120% 100% at 20% 10%, #E86B54 0%, transparent 55%), linear-gradient(160deg, #D63A26 0%, #9E2C1B 100%); }
+.result-card--taeeum  { background: radial-gradient(120% 100% at 20% 10%, #93A94F 0%, transparent 55%), linear-gradient(160deg, #74893A 0%, #4F6425 100%); }
+.result-card--soeum   { background: radial-gradient(120% 100% at 20% 10%, #E0B92E 0%, transparent 55%), linear-gradient(160deg, #C79A16 0%, #8F6E08 100%); }
+.result-card__label { font-family: var(--font-mono); font-size: 11px; letter-spacing: .24em; text-transform: uppercase; opacity: .85; }
+.result-card__symbol { width: 88px; height: 88px; margin: 22px auto 0; }
+.result-card__symbol svg { width: 100%; height: 100%; }
+.result-card__symbol path, .result-card__symbol circle, .result-card__symbol line, .result-card__symbol ellipse, .result-card__symbol polyline { fill: none; stroke: #F7F4EF; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.result-card__color { font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; opacity: .82; margin-top: 16px; }
+.result-card__title { font-weight: 600; font-size: 30px; margin-top: 6px; letter-spacing: -0.01em; }
+.result-card__summary { font-size: 15px; margin-top: 10px; opacity: .92; word-break: keep-all; }
+.result-card__tags { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.result-card__tags span { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; border: 1px solid rgba(247, 244, 239, .5); border-radius: var(--radius-pill); padding: 5px 12px; }
+
+/* 결과 리포트 섹션 */
+.r-sections { margin-top: 20px; display: grid; gap: 12px; }
+.r-section { border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px; background: rgba(244, 242, 237, .6); }
+.r-section--accent { background: var(--paper-deep); border-color: var(--clay); }
+.r-section__key { font-family: var(--font-mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--clay); }
+.r-section h3 { font-size: 17px; font-weight: 600; margin-top: 6px; word-break: keep-all; }
+.r-section p { font-size: 14px; color: var(--ink-soft); margin-top: 8px; word-break: keep-all; }
+.r-section p b { color: var(--ink); font-weight: 600; }
+.result-actions { margin-top: 32px; display: grid; gap: 12px; }
+.result-actions .btn { justify-content: center; }
+
+/* 맞춤 추천 */
+.rec-badge { display: inline-block; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--clay); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 6px 14px; }
+.rec-group { margin-top: 32px; }
+.rec-group__title { font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.rec-group__why { font-size: 13px; color: var(--ink-soft); margin-top: 10px; word-break: keep-all; }
+.partner-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 4px; border-bottom: 1px solid var(--line); }
+.partner-card__name { font-weight: 600; font-size: 15px; }
+.partner-card__tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; color: var(--ink-soft); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 3px 9px; margin-left: 8px; vertical-align: 2px; }
+.partner-card__desc { font-size: 13px; color: var(--ink-soft); margin-top: 4px; word-break: keep-all; }
+.partner-card__btn { flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; color: var(--ink); background: none; border: 1px solid var(--ink); border-radius: var(--radius-pill); padding: 9px 16px; cursor: pointer; transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out); white-space: nowrap; }
+.partner-card__btn:hover { background: var(--ink); color: var(--paper); }
+.rec-notice { margin-top: 24px; font-size: 12px; color: var(--ink-soft); line-height: 1.7; word-break: keep-all; }
+
+/* 공유 모달 */
+.share-modal { position: fixed; inset: 0; display: none; place-items: end center; background: rgba(59, 47, 42, .4); z-index: 200; padding: 20px; }
+.share-modal.is-open { display: grid; }
+.share-sheet { width: 100%; max-width: 480px; background: var(--paper); border-radius: var(--radius-slot); padding: 32px 28px; text-align: center; }
+.share-sheet h3 { font-size: 20px; font-weight: 600; }
+.share-sheet p { font-size: 13px; color: var(--ink-soft); margin-top: 8px; word-break: keep-all; }
+.share-sheet__btns { margin-top: 24px; display: grid; gap: 10px; }
+.share-btn { font-family: var(--font-serif); font-size: 15px; font-weight: 600; border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 15px 20px; cursor: pointer; transition: filter 200ms var(--ease-out); }
+.share-btn:hover { filter: brightness(.96); }
+.share-btn--kakao { background: #FEE500; color: #191600; border-color: #FEE500; }
+.share-btn--google { background: #FFFFFF; color: var(--ink); }
+.share-sheet__close { margin-top: 18px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); background: none; border: none; cursor: pointer; }
+
+.test-footer { text-align: center; padding: 0 22px 48px; font-size: 12px; color: var(--ink-soft); word-break: keep-all; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  html.js .reveal { opacity: 1; transform: none; transition: none; }
+  .loading__orb { animation: none; opacity: 1; }
+  .btn, .btn .arrow, .progress__bar, .quiz-opt, .partner-card__btn, .pillnav__menu a { transition: none; }
+}
+
+</style>
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+
+
+<!-- ══════════════════════════════ 사이트(랜딩) ══════════════════════════════ -->
+<div id="site">
+
+  <nav class="pillnav" aria-label="주요">
+    <span class="pillnav__logo" data-home>TINAM</span>
+    <div class="pillnav__menu">
+      <a href="#about">About us</a>
+      <a href="#forwho">For who</a>
+      <a href="#what">What to do</a>
+      <a href="#article">Article</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <button class="btn btn--solid pillnav__cta" data-start type="button">Start test <span class="arrow">→</span></button>
+  </nav>
+
+  <!-- 히어로 -->
+  <header class="hero">
+    <div class="wrap">
+      <p class="hero__kicker">Personal wellness type</p>
+      <h1 class="hero__headline">당신만의 '티나는'<br />웰니스 유형은 무엇인가요?</h1>
+      <p class="hero__sub">체질의학·척추관절 전문 한의사들이 제작한 웰니스 유형 테스트로, 나에 대해 깊이 알고 나를 위해 관리하세요.</p>
+      <div class="hero__actions">
+        <button class="btn btn--solid btn--lg" data-start type="button">내 유형 찾기 <span class="arrow">→</span></button>
+        <span class="micro">회원가입 없이, 지금 바로 온라인에서</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- About us -->
+    <section class="section" id="about">
+      <div class="wrap split split--flip">
+        <div class="split__body reveal">
+          <div class="about-block">
+            <p class="label">About us</p>
+            <h2 class="headline tt"><b>T</b>his <b>I</b>s <b>N</b>ot <b>A</b> <b>M</b>edicine</h2>
+            <p class="body-copy">치료가 아니라, 나답게 사는 것입니다.</p>
+            <p class="body-copy">약을 먹는게 아니라, 잘사는 방법을 받아들입니다.</p>
+          </div>
+          <div class="about-block">
+            <h2 class="headline tt"><b>T</b>his <b>I</b>s <b>N</b>ew, <b>A</b>uthentic <b>M</b>ethod</h2>
+            <p class="body-copy">무수히 많은 건강 관리 방법, 그거 내 것 아니에요.</p>
+            <p class="body-copy">이제는 새로운, 진짜 나만의 웰니스 루틴을 찾아야죠.</p>
+          </div>
+        </div>
+        <div class="img-slot img-slot--clay reveal">
+          <svg class="img-slot__art" viewBox="0 0 120 120" aria-hidden="true">
+            <path d="M60 100 L60 52" />
+            <path d="M60 62 C 40 62, 30 48, 30 32 C 50 32, 60 46, 60 62 Z" />
+            <path d="M60 74 C 80 74, 92 60, 92 44 C 72 44, 60 58, 60 74 Z" />
+            <path d="M40 100 C 40 92, 50 88, 60 88 C 70 88, 80 92, 80 100" />
+            <circle cx="60" cy="26" r="6" />
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- For who -->
+    <section class="section section--deep" id="forwho">
+      <div class="wrap split">
+        <div class="split__body reveal">
+          <p class="label">For who</p>
+          <h2 class="headline">'나'를 사랑하는만큼,<br />알아가세요.</h2>
+          <p class="forwho-lead">나를 잘 알았기에 비로소,<br />내 삶은 Wellness</p>
+        </div>
+        <div class="img-slot img-slot--photo reveal">
+          <!-- 사진 교체 자리: 아래 span 을 지우고 <img src="..." alt="..." /> 를 넣으면 된다 -->
+          <span class="img-slot__ph">Photo</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- What to do -->
+    <section class="section" id="what">
+      <div class="wrap split split--flip">
+        <div class="split__body reveal">
+          <p class="label">What to do</p>
+          <h2 class="headline">나와의 대화에<br />집중하세요</h2>
+          <ul class="steps">
+            <li>
+              <span class="num">01</span>
+              <div>
+                <h3>웰니스 유형 테스트</h3>
+                <p>체질의학·척추관절 전문 한의사들이 설계한 짧은 질문들로 나만의 웰니스 유형을 확인합니다.</p>
+                <span class="meta">평균 소요시간 약 5분 · 문항 38개 (체질 24 + 자세 14)</span>
+              </div>
+            </li>
+            <li>
+              <span class="num">02</span>
+              <div>
+                <h3>나만의 라이프스타일 가이드</h3>
+                <p>나에게 맞춰 엄선된 식습관·생활환경·운동 정보만 보여드립니다. 하루 루틴도 챙겨가세요.</p>
+                <span class="meta">유형별 맞춤 관리 제안 · 파트별 정리</span>
+              </div>
+            </li>
+            <li>
+              <span class="num">03</span>
+              <div>
+                <h3>나만의 웰니스를 스스로 이끌어가세요.</h3>
+                <p>나에게 맞는 라이프스타일에 최적화된 Wellness-Mate를 소개합니다.</p>
+                <span class="meta">제휴 파트너와 연결 (예정)</span>
+              </div>
+            </li>
+          </ul>
+          <div class="split__cta">
+            <button class="btn btn--solid btn--lg" data-start type="button">내 유형 확인하러 가기 <span class="arrow">→</span></button>
+          </div>
+        </div>
+        <div class="img-slot img-slot--clay reveal">
+          <svg class="img-slot__art" viewBox="0 0 120 120" aria-hidden="true">
+            <path d="M30 84 L54 54 L70 70 L92 40" />
+            <path d="M92 40 L92 52 M92 40 L80 40" />
+            <path d="M26 96 L96 96" />
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Article -->
+    <section class="section section--deep" id="article">
+      <div class="wrap">
+        <div class="article-head reveal">
+          <p class="label">Article</p>
+          <h2 class="headline">천천히 읽는 웰니스</h2>
+          <p class="body-copy" style="margin-left:auto;margin-right:auto">내 유형을 아는 것에서 한 걸음 더 — 일상에 스며드는 웰니스 이야기를 준비하고 있습니다.</p>
+        </div>
+        <div class="article-grid">
+          <article class="article-card reveal">
+            <div class="article-card__thumb img-slot--clay"></div>
+            <div class="article-card__body">
+              <p class="article-card__cat">Morning routine</p>
+              <h3>아침의 몸은 왜 저마다 다를까 — 유형별 기상 루틴</h3>
+              <span class="soon">Coming soon</span>
+            </div>
+          </article>
+          <article class="article-card reveal">
+            <div class="article-card__thumb img-slot--sand"></div>
+            <div class="article-card__body">
+              <p class="article-card__cat">Daily fatigue</p>
+              <h3>검진은 정상인데 늘 피곤한 사람들을 위한 안내</h3>
+              <span class="soon">Coming soon</span>
+            </div>
+          </article>
+          <article class="article-card reveal">
+            <div class="article-card__thumb img-slot--clay"></div>
+            <div class="article-card__body">
+              <p class="article-card__cat">Seasonal table</p>
+              <h3>내 유형에 맞는 계절 식탁</h3>
+              <span class="soon">Coming soon</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section" id="contact">
+      <div class="wrap split">
+        <div class="split__body reveal">
+          <p class="label">Contact</p>
+          <h2 class="headline">아직 나만의 방법을 못 찾으셨다면,<br />지금 5분이 그 시작이 될 수 있습니다</h2>
+          <p class="body-copy">테스트는 회원가입 없이 무료로 진행돼요. 결과를 공유하고 싶다면 구글 또는 카카오로 간편하게 로그인해주세요.</p>
+          <div class="split__cta">
+            <button class="btn btn--solid btn--lg" data-start type="button">무료로 내 웰니스 유형 확인하기 <span class="arrow">→</span></button>
+          </div>
+          <div class="contact-links">
+            <a href="#"><span class="k">MAIL</span>hello@tinam.kr</a>
+            <a href="#"><span class="k">INSTAGRAM</span>@tinam.official</a>
+          </div>
+        </div>
+        <div class="img-slot img-slot--sand reveal">
+          <svg class="img-slot__art" viewBox="0 0 120 120" aria-hidden="true">
+            <path d="M28 44 L60 68 L92 44" />
+            <path d="M28 44 L28 82 L92 82 L92 44 L60 68 Z" />
+          </svg>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="disclaimer">본 결과는 참고용 유형 분류이며 의료 행위가 아닙니다.</p>
+    <p class="copyright">© 2026 TINAM · Wellness type test demo</p>
+  </footer>
+
+</div><!-- /#site -->
+
+
+<!-- ══════════════════════════════ 설문 앱 ══════════════════════════════ -->
+<div id="app" hidden>
+
+  <div class="testbar">
+    <span class="testbar__logo" data-home>TINAM</span>
+    <span class="testbar__flag">Demo · 감수 반영본</span>
+  </div>
+
+  <div class="progress" id="progress" hidden><div class="progress__bar" id="progress-bar"></div></div>
+
+  <main>
+    <!-- 인트로 -->
+    <section class="screen is-active" id="screen-intro">
+      <div class="stage">
+        <p class="label">Wellness type test</p>
+        <h1 class="intro__headline">짧은 질문 몇 개면,<br />나의 웰니스 유형이 보여요</h1>
+        <p class="body-copy">정답은 없어요. 요즘의 나에게 가장 가까운 쪽을 편하게 골라주세요. 끝나면 나의 유형과 파트별 관리 제안을 정리해 드려요.</p>
+        <div class="intro__meta">
+          <div class="row"><b>소요시간</b><span>약 5분, 술술 넘어가요</span></div>
+          <div class="row"><b>구성</b><span>파트 1 · 체질 24문항 → 파트 2 · 자세 14문항</span></div>
+          <div class="row"><b>비용</b><span>회원가입 없이 무료 · 공유할 때만 로그인</span></div>
+        </div>
+        <div class="notice">
+          <b>구동 테스트용 데모입니다.</b> 문항·색·동물 유형은 <b>감수 반영본</b>이며, 결과 서술·추천 파트너는 재감수·제휴 계약 전 가안이에요.
+        </div>
+        <div class="result-actions">
+          <button class="btn btn--solid" id="btn-start" type="button">테스트 시작하기 <span class="arrow">→</span></button>
+          <button class="btn btn--outline" data-home type="button">← 소개로 돌아가기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 퀴즈 -->
+    <section class="screen" id="screen-quiz">
+      <div class="stage">
+        <p class="quiz__part" id="quiz-part">파트 1 · 체질</p>
+        <p class="quiz__count" id="quiz-count">01 / 38</p>
+        <h2 class="quiz__q" id="quiz-q"></h2>
+        <div class="quiz__opts" id="quiz-opts"></div>
+        <button class="quiz__back" id="btn-quiz-back" type="button">← 이전으로</button>
+      </div>
+    </section>
+
+    <!-- 분석 로딩 -->
+    <section class="screen" id="screen-loading">
+      <div class="stage loading">
+        <div class="loading__orb" aria-hidden="true"></div>
+        <p class="loading__t">나의 리듬을 정리하는 중이에요</p>
+        <p class="loading__d">답변을 유형별 흐름으로 살펴보고 있어요</p>
+      </div>
+    </section>
+
+    <!-- 결과 -->
+    <section class="screen" id="screen-result">
+      <div class="stage" style="justify-content:flex-start">
+        <div class="result-card" id="result-card">
+          <p class="result-card__label">My wellness type</p>
+          <div class="result-card__symbol" id="r-symbol" aria-hidden="true"></div>
+          <p class="result-card__color" id="r-color"></p>
+          <h2 class="result-card__title" id="r-title"></h2>
+          <p class="result-card__summary" id="r-summary"></p>
+          <div class="result-card__tags" id="r-tags"></div>
+        </div>
+        <div class="notice" style="margin-top:16px">
+          색·동물 유형은 <b>감수 확정본</b>이에요. 결과 서술·확률 문구는 재감수 전 가안이라 표현이 다듬어질 수 있어요.
+        </div>
+        <div class="r-sections" id="r-sections"></div>
+        <div class="result-actions">
+          <button class="btn btn--solid" id="btn-recommend" type="button">나에게 맞는 추천 보기 <span class="arrow">→</span></button>
+          <button class="btn btn--outline" id="btn-share" type="button">결과 공유하기</button>
+          <button class="btn btn--outline" id="btn-restart" type="button">처음부터 다시 하기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 맞춤 추천 -->
+    <section class="screen" id="screen-recommend">
+      <div class="stage" style="justify-content:flex-start">
+        <span class="rec-badge" id="rec-type-badge"></span>
+        <h2 class="headline" style="font-size:clamp(24px,5vw,34px)">파트별로 둘러보는<br />맞춤 관리 제안</h2>
+        <div class="notice" style="margin-top:20px">
+          <b>제휴 예정 · 감수 전 가안</b>입니다. 아래 파트너·링크는 실제 제휴가 아닌 화면 구성 예시예요.
+        </div>
+        <div id="rec-groups"></div>
+        <div class="result-actions">
+          <button class="btn btn--outline" id="btn-back-result" type="button">← 결과로 돌아가기</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="test-footer">본 결과는 참고용 유형 분류이며 의료 행위가 아닙니다.</footer>
+
+  <!-- 공유 모달 -->
+  <div class="share-modal" id="share-modal">
+    <div class="share-sheet">
+      <h3>결과를 공유해볼까요?</h3>
+      <p>공유할 때만 간편 로그인이 필요해요. 테스트 자체는 로그인 없이 즐길 수 있어요.</p>
+      <div class="share-sheet__btns">
+        <button class="share-btn share-btn--kakao" data-demo-login="kakao" type="button">카카오로 계속하기</button>
+        <button class="share-btn share-btn--google" data-demo-login="google" type="button">Google로 계속하기</button>
+      </div>
+      <button class="share-sheet__close" id="btn-share-close" type="button">닫기</button>
+    </div>
+  </div>
+
+</div><!-- /#app -->
+<script>
+/* ============================================================================
+   웰니스 유형 · 매핑(색·동물·유형명 + 체형 리포트)  —  survey/mapping.js
+   ----------------------------------------------------------------------------
+   출처(확정): 사상체질_아이콘_기획.md (지성·지윤 감수) — 색·동물·유형명.
+   설계 결정(구현노트 ② S4): 유형명 = 색+동물형('다홍 여우형').
+   원칙: 사상체질 명칭(태양·소양·태음·소음)은 백엔드 은닉 키로만 두고, 노출은 색·동물 유형명.
+     체형 6종은 색·동물화 없이 '체형 리포트'(기능 라벨)로 표기 — 지성 감수 Q9.
+   표현규제: 금칙어(진단/치료/효과/100%/무조건/절대/주사/바늘) 배제, '경향·관리 제안' 톤.
+     결과 화면 '체형' 파트는 아래 BODYTYPE_LABELS(자세 결과)로 채움(성격·음식·운동·환경=체질).
+   theme = tokens.css / components.css 의 wl-result--{key} · wl-type--{key} (키=체질 은닉키).
+   ============================================================================ */
+(function (global) {
+  'use strict';
+
+  // ── 체질 4종 → 유형명·색·동물 + 결과 서술(성격/음식/운동/환경) ──────────
+  // 벡터·판정 순서 규칙: [태양, 소양, 태음, 소음].
+  var CONSTITUTION_TYPES = {
+    taeyang: {
+      key: 'taeyang', theme: 'taeyang', emoji: '🦅',
+      name: '스틸블루 매형', animal: '매', color: '스틸블루',
+      summary: '높은 곳에서 빠르게 판단하고 바로 움직이는, 진취적인 당신.',
+      tags: ['진취적', '추진력', '안정 보완'],
+      sections: {
+        성격: { icon: '🦅', body: '생각이 서면 곧장 행동으로 옮기는 추진력이 강한 편이에요. 앞서 나가는 기질이 매력이라, 가끔은 속도를 늦추고 몸을 이완하는 시간을 곁들이면 균형을 잡는 데 참고가 될 수 있어요.' },
+        음식: { icon: '🍚', body: '기운이 위로 잘 몰리는 편이라, 자극이 적고 담백한 균형 식단이 편하게 느껴질 수 있어요. 급하게 먹기보다 천천히 먹는 습관을 관리 제안으로 살펴볼 만해요.' },
+        운동: { icon: '🧘', body: '상체에 힘이 실리는 편이라, 하체와 안정성을 함께 키우는 움직임이 잘 어울려요. 격하게 몰아붙이기보다 꾸준히 이어가는 루틴이 컨디션 관리에 참고가 될 수 있어요.' },
+        환경: { icon: '🌙', body: '긴장이 위로 모이기 쉬운 편이라, 잠들기 전 몸을 가볍게 데우고 이완하는 습관이 편안한 리듬을 만드는 데 도움이 될 수 있어요.' }
+      }
+    },
+    soyang: {
+      key: 'soyang', theme: 'soyang', emoji: '🦊',
+      name: '다홍 여우형', animal: '여우', color: '다홍',
+      summary: '영리하고 재빠르고 사교적인, 에너지가 밖으로 발산되는 당신.',
+      tags: ['활발함', '사교적', '그라운딩 필요'],
+      sections: {
+        성격: { icon: '🦊', body: '활발하고 사람들과 쉽게 어울리는 편이에요. 감정이 확 올랐다가도 금세 풀리는 시원한 기질이 매력이라, 들뜬 에너지를 차분히 가라앉히는 시간을 곁들이면 균형에 참고가 될 수 있어요.' },
+        음식: { icon: '🥗', body: '몸에 열감이 잘 느껴지는 편이라, 수분과 채소를 넉넉히 곁들이는 식습관이 편하게 느껴질 수 있어요. 맵고 자극적인 음식은 가끔의 즐거움 정도로 두는 걸 관리 제안으로 살펴볼 만해요.' },
+        운동: { icon: '🏃', body: '상체에 에너지가 실리는 편이라, 하체를 함께 쓰는 균형 운동이 잘 어울려요. 활동적인 루틴에서 만족을 느끼되 과열되지 않게 조절하는 습관이 도움이 될 수 있어요.' },
+        환경: { icon: '🪟', body: '더운 환경에서 컨디션이 쉽게 흐트러지는 편이라, 시원하고 환기가 잘 되는 공간에서 쉬는 습관이 편안한 리듬에 참고가 될 수 있어요.' }
+      }
+    },
+    taeeum: {
+      key: 'taeeum', theme: 'taeeum', emoji: '🐻',
+      name: '그린올리브 곰형', animal: '곰', color: '그린올리브',
+      summary: '쌓고 저장하는 힘이 좋은, 뿌리내리듯 꾸준한 당신.',
+      tags: ['꾸준함', '인내심', '순환 관리'],
+      sections: {
+        성격: { icon: '🐻', body: '한번 시작한 일을 끝까지 이어가는 꾸준함과 인내심이 강점이에요. 차분히 쌓아가는 기질이 매력이라, 가끔 환기하듯 새로운 자극을 곁들이면 리듬에 참고가 될 수 있어요.' },
+        음식: { icon: '🌾', body: '잘 먹고 잘 쌓는 편이라, 식이섬유가 풍부한 식단으로 속을 가볍게 하는 습관이 편하게 느껴질 수 있어요. 과식은 천천히 줄여가는 걸 관리 제안으로 살펴볼 만해요.' },
+        운동: { icon: '🚶', body: '천천히 오래 걷거나 가벼운 유산소를 자주 곁들이면 컨디션 관리에 도움이 될 수 있어요. 몸이 무겁게 느껴지는 날일수록 짧게라도 움직이는 루틴이 잘 어울려요.' },
+        환경: { icon: '💦', body: '땀을 내야 개운함을 느끼는 편이라, 가볍게 땀 내고 환기하는 습관이 편안한 리듬에 참고가 될 수 있어요. 부기나 순환에 신경 쓰는 습관도 함께 살펴볼 만해요.' }
+      }
+    },
+    soeum: {
+      key: 'soeum', theme: 'soeum', emoji: '🐱',
+      name: '레몬 고양이형', animal: '고양이', color: '레몬',
+      summary: '볕 좋은 자리를 찾아 에너지를 아끼며 조용히 움직이는 당신.',
+      tags: ['섬세함', '신중함', '온기 보완'],
+      sections: {
+        성격: { icon: '🐱', body: '작은 것도 세심하게 살피는 섬세함과 신중함이 돋보이는 편이에요. 내 속도를 지킬 때 편안함을 느끼는 기질이라, 너무 많은 생각이 쌓이지 않게 비우는 시간을 곁들이면 참고가 될 수 있어요.' },
+        음식: { icon: '🍲', body: '소화기가 예민한 편이라, 따뜻하고 소화가 편한 식단이 편하게 느껴질 수 있어요. 차가운 음식은 조금 줄이고 규칙적인 식사 시간을 지키는 걸 관리 제안으로 살펴볼 만해요.' },
+        운동: { icon: '🧣', body: '몸이 쉽게 차가워지는 편이라, 천천히 몸을 데우는 저강도 운동이 잘 어울려요. 땀을 과하게 빼기보다 가볍게 순환을 돕는 루틴이 컨디션 관리에 참고가 될 수 있어요.' },
+        환경: { icon: '🛌', body: '따뜻하고 온도가 일정한 공간에서 편안함을 느끼는 편이에요. 잠들기 전 몸을 미지근하게 데우는 습관이 편안한 수면 리듬에 참고가 될 수 있어요.' }
+      }
+    }
+  };
+
+  // ── 체형 6종 → '체형 리포트' 라벨·설명(색·동물화 없음, 기능 라벨) ───────
+  // 결과 화면의 '체형' 파트를 이 내용으로 채움(지성 감수 Q9). desc = 순화 경향 문구.
+  var BODYTYPE_LABELS = {
+    kyphoLordosis: {
+      key: 'kyphoLordosis', label: '후만-전만형',
+      desc: '골반이 앞으로 기울며 허리 굴곡이 깊어지고 등 상부가 굽는 경향이 보여요. 골반과 허리의 정렬을 먼저 잡아가는 움직임을 참고 습관으로 살펴볼 만해요.'
+    },
+    flatBack: {
+      key: 'flatBack', label: '편평등형',
+      desc: '허리의 자연스러운 곡선이 평평해지는 경향이 보여요. 허리 곡선을 부드럽게 되살리는 움직임을 참고 습관으로 살펴볼 만해요.'
+    },
+    swayBack: {
+      key: 'swayBack', label: '굽은등형',
+      desc: '골반과 몸통이 앞으로 밀리고 등 상부가 뒤로 굽는, 현대인에게 흔한 경향이 보여요. 골반을 중립으로 두고 코어 정렬을 잡는 움직임을 참고 습관으로 살펴볼 만해요.'
+    },
+    forwardHead: {
+      key: 'forwardHead', label: '거북목형',
+      desc: '머리가 앞으로 나오고 목·등 상부에 긴장이 쌓이는 경향이 보여요. 목과 등 상부의 긴장을 풀어 정렬을 잡는 움직임을 참고 습관으로 살펴볼 만해요.'
+    },
+    asymmetry: {
+      key: 'asymmetry', label: '좌우 비대칭형',
+      desc: '짝다리·한쪽 사용 습관이 쌓여 좌우 균형이 기우는 경향이 보여요. 좌우를 고르게 쓰는 움직임과 생활 습관 점검을 참고 제안으로 살펴볼 만해요.'
+    },
+    ideal: {
+      key: 'ideal', label: '균형 잡힌 정렬형',
+      desc: '전반적으로 균형 잡힌 정렬에 가까운 편이에요. 지금의 좋은 자세를 지켜가는 가벼운 움직임을 참고 습관으로 살펴볼 만해요.'
+    }
+  };
+
+  function getConstitutionType(key) { return CONSTITUTION_TYPES[key] || null; }
+  function getBodyTypeLabel(key) { return BODYTYPE_LABELS[key] || null; }
+
+  global.CONSTITUTION_TYPES = CONSTITUTION_TYPES;
+  global.BODYTYPE_LABELS = BODYTYPE_LABELS;
+  global.getConstitutionType = getConstitutionType;
+  global.getBodyTypeLabel = getBodyTypeLabel;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ───────── */
+
+/* ============================================================================
+   체질 설문(24문항) + 채점기  —  survey/sasang.js
+   ----------------------------------------------------------------------------
+   근거: 감수.docx(체질 22문항, 지윤 감수) + 지윤 감수 수정 전부 반영(구현노트 ② S3).
+   가중치 벡터 순서: [태양, 소양, 태음, 소음].
+   척도(ternary): 그렇다(+벡터) / 아니다(−벡터) / 잘 모르겠어요(0).
+   톤(S1): 원문 의미·가중치 불변, 어미만 '~해요'로 순화. 판정 벡터는 원본과 동일.
+
+   지윤 감수 반영 내역:
+   - #4  표현 변경 → '손발 피부가 얇고 연약한 편이에요'(기육 견실도), 가중치 유지.
+   - #9  가중치 [-1,-1,+2,0] → [-1,+1,+1,0] (소양 열성 변비 반영).
+   - #10 가중치 [0,+2,-1,0]  → [0,-1,0,+1]  (소음 한성 설사 반영).
+   - #16 가중치 [+2,+1,-1,-1] → [+2,+2,-1,-1] (태양 강신호 보강).
+   - #2  복원(원본 CUT #2 '어깨너비 대비 허리·엉덩이가 작다') — 기존 #1도 유지[이탈-B].
+   - #13 분할 → '땀이 많다'(S14) + '땀 흘리고 나면 기운이 빠진다'(S15).
+          S14 가중치 [0,+2,+1,-1] = 지윤 감수 확정([이탈-A] 해소) / S15 = 원벡터 [0,-1,0,+2].
+   → 최종 24문항. 채점 공식(누적·음수클리핑·정규화·1·2위 병기)은 원본 그대로.
+   ============================================================================ */
+(function (global) {
+  'use strict';
+
+  // 판정 순서 키(벡터 인덱스와 1:1): [태양, 소양, 태음, 소음]
+  var SASANG_KEYS = ['taeyang', 'soyang', 'taeeum', 'soeum'];
+
+  var SASANG_QUESTIONS = [
+    // ── 체형·외형 (6) ────────────────────────────────────────────────────
+    { id: 'S01', part: 'sasang', area: '체형·외형', scale: 'ternary',
+      text: '상체가 하체보다 더 발달했다는 얘기를 들어요', weights: [ 2,  2, -1, -1] },
+    { id: 'S02', part: 'sasang', area: '체형·외형', scale: 'ternary',   // #2 복원
+      text: '어깨너비에 비해 허리·엉덩이가 작은 편이에요', weights: [ 1,  2, -1, -1] },
+    { id: 'S03', part: 'sasang', area: '체형·외형', scale: 'ternary',
+      text: '목이 굵고 짧은 편이고 뒷목·등에 살집이 있어요', weights: [-1, -1,  2,  0] },
+    { id: 'S04', part: 'sasang', area: '체형·외형', scale: 'ternary',
+      text: '살이 잘 안 붙고 마른 편이라는 얘기를 들어요', weights: [ 0, -1, -2,  2] },
+    { id: 'S05', part: 'sasang', area: '체형·외형', scale: 'ternary',   // #4 표현 수정(지윤)
+      text: '손발 피부가 얇고 연약한 편이에요', weights: [-1,  0, -1,  2] },
+    { id: 'S06', part: 'sasang', area: '체형·외형', scale: 'ternary',
+      text: '하체가 상체보다 튼튼하고 발달했어요', weights: [-1, -2,  2,  0] },
+
+    // ── 소화·식욕 (3) ────────────────────────────────────────────────────
+    { id: 'S07', part: 'sasang', area: '소화·식욕', scale: 'ternary',
+      text: '식욕이 좋고 아무 음식이나 잘 먹어요', weights: [ 0,  1,  2, -2] },
+    { id: 'S08', part: 'sasang', area: '소화·식욕', scale: 'ternary',
+      text: '찬 음식을 먹으면 배가 자주 불편해요', weights: [ 0, -2,  0,  2] },
+    { id: 'S09', part: 'sasang', area: '소화·식욕', scale: 'ternary',
+      text: '맵고 자극적인 음식을 유난히 좋아해요', weights: [ 0,  2,  0, -1] },
+
+    // ── 대소변 (3) ───────────────────────────────────────────────────────
+    { id: 'S10', part: 'sasang', area: '대소변', scale: 'ternary',      // #9 가중치 수정(지윤)
+      text: '변비 기운이 있어 대변이 잘 안 나와요', weights: [-1,  1,  1,  0] },
+    { id: 'S11', part: 'sasang', area: '대소변', scale: 'ternary',      // #10 가중치 수정(지윤)
+      text: '대변이 무르거나 하루에 여러 번 봐요', weights: [ 0, -1,  0,  1] },
+    { id: 'S12', part: 'sasang', area: '대소변', scale: 'ternary',
+      text: '소변 양이 적고 잘 참는 편이에요', weights: [ 0, -1,  1,  1] },
+
+    // ── 땀 (3, #13 분할로 2→3) ───────────────────────────────────────────
+    { id: 'S13', part: 'sasang', area: '땀', scale: 'ternary',
+      text: '땀을 흘리면 오히려 몸이 개운해져요', weights: [ 0, -1,  2, -1] },
+    { id: 'S14', part: 'sasang', area: '땀', scale: 'ternary',          // #13 분할 A · 지윤 확정
+      text: '조금만 움직여도 땀이 많은 편이에요', weights: [ 0,  2,  1, -1] },
+    { id: 'S15', part: 'sasang', area: '땀', scale: 'ternary',          // #13 분할 B · 원벡터
+      text: '땀을 흘리고 나면 기운이 빠지는 편이에요', weights: [ 0, -1,  0,  2] },
+
+    // ── 수면 (2) ─────────────────────────────────────────────────────────
+    { id: 'S16', part: 'sasang', area: '수면', scale: 'ternary',
+      text: '걱정·생각이 많아 잠들기까지 오래 걸려요', weights: [-1,  0, -1,  2] },
+    { id: 'S17', part: 'sasang', area: '수면', scale: 'ternary',
+      text: '더위를 많이 타서 더운 날엔 잠을 설쳐요', weights: [ 0,  2,  0, -1] },
+
+    // ── 기질·감정 (5) ────────────────────────────────────────────────────
+    { id: 'S18', part: 'sasang', area: '기질·감정', scale: 'ternary',   // #16 가중치 수정(지윤)
+      text: '도전적인 상황도 두려움 없이 밀고 나가요', weights: [ 2,  2, -1, -1] },
+    { id: 'S19', part: 'sasang', area: '기질·감정', scale: 'ternary',
+      text: '화가 확 올라도 금방 풀리는 편이에요', weights: [ 0,  2, -1, -1] },
+    { id: 'S20', part: 'sasang', area: '기질·감정', scale: 'ternary',
+      text: '한번 시작한 일은 끝까지 꾸준히 해요', weights: [ 0, -1,  2,  0] },
+    { id: 'S21', part: 'sasang', area: '기질·감정', scale: 'ternary',
+      text: '낯선 자리에선 먼저 나서기보다 지켜보는 편이에요', weights: [-1, -1,  0,  2] },
+    { id: 'S22', part: 'sasang', area: '기질·감정', scale: 'ternary',
+      text: '활동적인 자리를 좋아하고 사람들과 쉽게 친해져요', weights: [ 0,  2,  1, -2] },
+
+    // ── 컨디션·에너지 (2) ────────────────────────────────────────────────
+    { id: 'S23', part: 'sasang', area: '컨디션·에너지', scale: 'ternary',
+      text: '몸이 무겁고 잘 붓고 체중이 쉽게 붙어요', weights: [-1, -1,  2,  0] },
+    { id: 'S24', part: 'sasang', area: '컨디션·에너지', scale: 'ternary',
+      text: '조금만 피곤해도 기운이 뚝 떨어져요', weights: [ 0, -1,  0,  2] }
+  ];
+
+  /**
+   * 체질 채점. 응답은 문항 순서에 맞춘 배열: +1(그렇다)/0(모름)/−1(아니다).
+   * 공식(원본 그대로): 벡터 누적 → 음수 클리핑 → 정규화(합0이면 균등 25%) → 1·2위 병기.
+   * @param {number[]} answers  각 원소 ∈ {-1, 0, 1}
+   * @returns {{vector:number[], scores:Object, ranked:Array<{key:string,pct:number}>, top:string, second:string}}
+   */
+  function scoreSasang(answers) {
+    var vec = [0, 0, 0, 0];
+    SASANG_QUESTIONS.forEach(function (q, i) {
+      var a = answers[i] || 0;                 // 미응답=0(모름) 안전 처리
+      for (var k = 0; k < 4; k++) vec[k] += a * q.weights[k];
+    });
+    // 음수 클리핑
+    var clipped = vec.map(function (v) { return v < 0 ? 0 : v; });
+    var sum = clipped.reduce(function (a, b) { return a + b; }, 0);
+
+    var scores = {};
+    SASANG_KEYS.forEach(function (key, k) {
+      // 합이 0이면(전부 모름/상쇄) 균등 25%
+      scores[key] = sum === 0 ? 25 : Math.round((clipped[k] / sum) * 1000) / 10;
+    });
+
+    var ranked = SASANG_KEYS
+      .map(function (key) { return { key: key, pct: scores[key] }; })
+      .sort(function (a, b) { return b.pct - a.pct; });
+
+    return {
+      vector: vec, scores: scores, ranked: ranked,
+      top: ranked[0].key, second: ranked[1].key
+    };
+  }
+
+  global.SASANG_KEYS = SASANG_KEYS;
+  global.SASANG_QUESTIONS = SASANG_QUESTIONS;
+  global.scoreSasang = scoreSasang;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ───────── */
+
+/* ============================================================================
+   체형(자세) 설문(14문항) + 채점기  —  survey/posture.js
+   ----------------------------------------------------------------------------
+   근거: 감수.docx(체형 14문항, 지성 감수 — "14문항 전부 반영", 구현노트 ② S2).
+   근거서: Kendall 5판 2장(6체형 정의·근육) · Neumann Ch.9·10(요추·들기 생체역학).
+   척도(freq4): 전혀 없어요(0)·가끔요(1)·자주요(2)·항상요(3) × 문항별 체형 가중치.
+   체형 키(6): kyphoLordosis(후만-전만)·flatBack(편평등)·swayBack(굽은등)·
+             forwardHead(거북목)·asymmetry(좌우비대칭)·ideal(균형 정렬).
+   톤(S1): 원문 의미·가중치 불변, 어미만 '~해요'로 순화.
+   [이탈-C] P12(책상 낮음) 가중치 "후만전만·거북목(+2)" = 둘 다 +2로 해석.
+   ideal 은 나머지 5체형 총합이 낮을수록 상대 보정(감수.docx §체형 커버리지 · 원본과 동일).
+   ============================================================================ */
+(function (global) {
+  'use strict';
+
+  // ideal 상대 보정 기준값(가안). 5체형 실측 총합이 이보다 낮을수록 '균형 정렬'이 상위로.
+  var IDEAL_BASELINE = 6;
+
+  var BODYTYPE_KEYS = ['kyphoLordosis', 'flatBack', 'swayBack', 'forwardHead', 'asymmetry', 'ideal'];
+
+  var POSTURE_QUESTIONS = [
+    // ── 좌식 ─────────────────────────────────────────────────────────────
+    { id: 'P01', part: 'posture', area: '좌식', scale: 'freq4',
+      text: '하루 6시간 이상, 엉덩이를 앞으로 빼고 앉아서 일하거나 공부해요',
+      weights: { swayBack: 1, flatBack: 1, forwardHead: 2 } },
+    { id: 'P02', part: 'posture', area: '좌식', scale: 'freq4',
+      text: '다리를 자주 꼬고 앉아요',
+      weights: { asymmetry: 3, swayBack: 1 } },
+    { id: 'P03', part: 'posture', area: '좌식', scale: 'freq4',
+      text: '앉을 때 억지로 등을 펴려고 뒤로 젖혀요',
+      weights: { flatBack: 3 } },
+    { id: 'P12', part: 'posture', area: '좌식', scale: 'freq4',
+      text: '책상이 안 맞아서 모니터가 눈높이보다 낮아 몸을 구부리게 돼요',
+      weights: { kyphoLordosis: 2, forwardHead: 2, swayBack: 1 } },
+    // ── 기기 ─────────────────────────────────────────────────────────────
+    { id: 'P04', part: 'posture', area: '기기', scale: 'freq4',
+      text: '노트북·태블릿을 무릎 위에 놓고 오래 써요',
+      weights: { swayBack: 2, forwardHead: 2 } },
+    // ── 서고 걷기 ────────────────────────────────────────────────────────
+    { id: 'P05', part: 'posture', area: '서고걷기', scale: 'freq4',
+      text: '한쪽 다리에 기대는 ‘짝다리’를 자주 짚어요',
+      weights: { asymmetry: 3 } },
+    { id: 'P06', part: 'posture', area: '서고걷기', scale: 'freq4',
+      text: '한쪽 다리를 뒤로 빼고 배를 앞으로 내민 채 서 있어요',
+      weights: { kyphoLordosis: 3 } },
+    // ── 신발 ─────────────────────────────────────────────────────────────
+    { id: 'P07', part: 'posture', area: '신발', scale: 'freq4',
+      text: '굽이 5cm 이상인 신발을 주 3회 이상 신어요',
+      weights: { kyphoLordosis: 3 } },
+    { id: 'P13', part: 'posture', area: '신발', scale: 'freq4',
+      text: '신발이 한쪽만 유독 빨리 닳아요',
+      weights: { asymmetry: 2 } },
+    // ── 수면 ─────────────────────────────────────────────────────────────
+    { id: 'P08', part: 'posture', area: '수면', scale: 'freq4',
+      text: '엎드려 자는 습관이 있어요',
+      weights: { forwardHead: 2, flatBack: 1 } },
+    { id: 'P09', part: 'posture', area: '수면', scale: 'freq4',
+      text: '베개가 안 맞아 목이 꺾인 채로 자요',
+      weights: { forwardHead: 3, asymmetry: 1 } },
+    // ── 코어 ─────────────────────────────────────────────────────────────
+    { id: 'P10', part: 'posture', area: '코어', scale: 'freq4',
+      text: '서거나 걸을 때 아랫배에 힘이 잘 안 들어가요',
+      weights: { swayBack: 3, kyphoLordosis: 1 } },
+    { id: 'P11', part: 'posture', area: '코어', scale: 'freq4',
+      text: '숨 쉴 때 어깨를 들썩이거나 가슴으로 숨 쉬어요',
+      weights: { forwardHead: 2, kyphoLordosis: 1, flatBack: 1 } },
+    // ── 가방 ─────────────────────────────────────────────────────────────
+    { id: 'P14', part: 'posture', area: '가방', scale: 'freq4',
+      text: '한쪽 어깨로만 크로스백이나 가방을 메요',
+      weights: { asymmetry: 2 } }
+  ];
+
+  /**
+   * 체형 채점. 응답은 문항 순서에 맞춘 배열: 0(전혀)~3(항상).
+   * 공식(원본 그대로): 응답점수 × 가중치 누적 → ideal 상대 보정 → 정규화 → 1위 경향.
+   * @param {number[]} answers  각 원소 ∈ {0,1,2,3}
+   * @returns {{scores:Object, totalReal:number, ranked:Array<{key:string,pct:number}>, top:string}}
+   */
+  function scorePosture(answers) {
+    var raw = { kyphoLordosis: 0, flatBack: 0, swayBack: 0, forwardHead: 0, asymmetry: 0 };
+    POSTURE_QUESTIONS.forEach(function (q, i) {
+      var a = answers[i] || 0;
+      Object.keys(q.weights).forEach(function (key) {
+        raw[key] += a * q.weights[key];
+      });
+    });
+    var totalReal = Object.keys(raw).reduce(function (s, k) { return s + raw[k]; }, 0);
+    // ideal = 실측 체형 신호가 약할수록 상위(상대 보정)
+    raw.ideal = Math.max(0, IDEAL_BASELINE - totalReal);
+
+    var sum = BODYTYPE_KEYS.reduce(function (s, k) { return s + raw[k]; }, 0);
+    var scores = {};
+    BODYTYPE_KEYS.forEach(function (key) {
+      scores[key] = sum === 0 ? 0 : Math.round((raw[key] / sum) * 1000) / 10;
+    });
+
+    var ranked = BODYTYPE_KEYS
+      .map(function (key) { return { key: key, pct: scores[key] }; })
+      .sort(function (a, b) { return b.pct - a.pct; });
+
+    return { scores: scores, totalReal: totalReal, ranked: ranked, top: ranked[0].key };
+  }
+
+  global.BODYTYPE_KEYS = BODYTYPE_KEYS;
+  global.POSTURE_QUESTIONS = POSTURE_QUESTIONS;
+  global.scorePosture = scorePosture;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ───────── */
+
+/* ============================================================================
+   웰니스 추천 · 파트너(업체) 데이터  —  survey/partners.js
+   ----------------------------------------------------------------------------
+   ⚠️ 감수 전 가안 · 제휴 미계약(Phase 3 대상). 아래 파트너는 화면 구성 예시이며
+      실제 제휴 업체가 아닙니다. url 은 특정 업체가 아닌 '카테고리 검색/예약' 일반
+      링크(네이버 지도예약·스마트스토어)로, 아웃링크 동작 검증용입니다.
+
+   설계 결정(구현노트 starry-mixing-toast.md):
+   - Q1 단계형: 지금은 '아웃링크'(바깥 예약·결제), 데이터는 배민형 승격 대비 필드 선탑재.
+   - Q4 카테고리: 비의료 3종만 — exercise(운동·필라테스) / sauna(사우나·스파) / food(식품·식이섬유).
+     의료기관(한의원·병원)은 의료법 §27 유인·알선 금지로 제외. 건기식은 광고 사전심의 부담으로 보류.
+   - Q5 링크 수단: 서비스형=네이버 예약, 상품형=스마트스토어 아웃링크.
+   - 표시광고법: 대가성 추천은 disclosure(광고·제휴 표시) 필수.
+
+   스키마:
+   {
+     id, category:'exercise'|'sauna'|'food',
+     name, desc, area,                 // area: 지역(MVP=null 허용, 배민형 '내 주변' 확장 시 사용)
+     linkType:'reserve'|'store', url,  // reserve=네이버예약형 / store=스마트스토어형
+     affiliateId,                      // 어필리에이트(CPS) 트래킹 ID (미계약=null)
+     disclosure,                       // 광고·제휴 표시 문구(표시광고법)
+     status:'live'|'pending',          // pending=제휴 준비 중(현재 전부 pending)
+     // ── 배민형 승격 대비 필드(현 단계 미사용) [이탈-1 완화] ──
+     bookable:false,                   // true 전환 시 앱 내 예약 중개
+     commissionModel:'CPS'             // 정산 모델(현재 성사수수료)
+   }
+   ============================================================================ */
+(function (global) {
+  'use strict';
+
+  var DISCLOSURE = '제휴 예정 · 화면 구성 예시 (실제 제휴 아님)';
+
+  var WELLNESS_PARTNERS = [
+    // ── 운동·필라테스·PT (체형 교정 추천의 핵심) ──────────────────────────
+    {
+      id: 'ex-pilates', category: 'exercise',
+      name: '필라테스·자세 스튜디오 (예시)',
+      desc: '골반·허리 정렬 중심의 소도구/기구 필라테스 클래스',
+      area: null, linkType: 'reserve',
+      url: 'https://map.naver.com/p/search/필라테스%20예약',
+      affiliateId: null, disclosure: DISCLOSURE, status: 'pending',
+      bookable: false, commissionModel: 'CPS'
+    },
+    {
+      id: 'ex-cardio', category: 'exercise',
+      name: '유산소·러닝 프로그램 (예시)',
+      desc: '가볍게 걷고 뛰는 저강도 유산소 루틴·클래스',
+      area: null, linkType: 'reserve',
+      url: 'https://map.naver.com/p/search/유산소%20운동%20클래스',
+      affiliateId: null, disclosure: DISCLOSURE, status: 'pending',
+      bookable: false, commissionModel: 'CPS'
+    },
+    // ── 사우나·스파·찜질 (땀·순환) ────────────────────────────────────────
+    {
+      id: 'sa-sauna', category: 'sauna',
+      name: '사우나·스파 (예시)',
+      desc: '가볍게 땀을 내는 저온·건식 사우나 이용권',
+      area: null, linkType: 'reserve',
+      url: 'https://map.naver.com/p/search/사우나%20예약',
+      affiliateId: null, disclosure: DISCLOSURE, status: 'pending',
+      bookable: false, commissionModel: 'CPS'
+    },
+    // ── 식품·식이섬유·건강식 (식이) ──────────────────────────────────────
+    {
+      id: 'fo-fiber', category: 'food',
+      name: '식이섬유·잡곡 식품 (예시)',
+      desc: '식이섬유가 풍부한 잡곡·식품 정기구독',
+      area: null, linkType: 'store',
+      url: 'https://search.shopping.naver.com/search/all?query=식이섬유',
+      affiliateId: null, disclosure: DISCLOSURE, status: 'pending',
+      bookable: false, commissionModel: 'CPS'
+    },
+    {
+      id: 'fo-mealkit', category: 'food',
+      name: '균형 식단 밀키트 (예시)',
+      desc: '채소·단백질 균형을 맞춘 간편 식단',
+      area: null, linkType: 'store',
+      url: 'https://search.shopping.naver.com/search/all?query=식단%20밀키트',
+      affiliateId: null, disclosure: DISCLOSURE, status: 'pending',
+      bookable: false, commissionModel: 'CPS'
+    }
+  ];
+
+  // 카테고리로 파트너 조회(가려진 항목 제외). 배민형 확장 시 area 인자 추가 예정.
+  function getPartnersByCategory(category) {
+    return WELLNESS_PARTNERS.filter(function (p) {
+      return p.category === category && p.status !== 'hidden';
+    });
+  }
+
+  global.WELLNESS_PARTNERS = WELLNESS_PARTNERS;
+  global.getPartnersByCategory = getPartnersByCategory;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ───────── */
+
+/* ============================================================================
+   웰니스 추천 · 규칙 테이블(결정 매트릭스)  —  survey/recommend.js
+   ----------------------------------------------------------------------------
+   Q2 결정: 룰베이스 '결정 매트릭스'(체질4 × 체형6 = 24조합). ML 아님 → 감수 가능.
+   구현 형태: 24칸을 한 칸씩 쓰는 대신 '체질 규칙(4) + 체형 규칙(6)'으로 인수분해해
+     조합 시점에 합성한다. 출력은 동일하게 24조합을 커버하되, 감수자는 4+6=10블록만
+     검토하면 되어 감수 유지보수가 쉽다. [이탈-5: 평면 24칸 대신 인수분해 — 보수적/감수 친화]
+
+   ⚠️ 전부 감수 전 가안. 체질 근거=학술연구팀+체질감수(지윤), 체형 근거=체형감수(지성) 대기.
+   표현규제: '진단/치료/효과/100%/무조건/절대/주사/바늘' 금칙어 배제, '경향·관리 제안' 톤.
+     - reason = 내부 근거(감수용, 노출 금지)  /  why = 노출 카피(순화 완료)
+
+   카테고리(파트너 매칭 키): exercise / sauna / food  (Q4 — 비의료 3종).
+   카드 순서(Q3): part 우선순위 = 체형(1) → 운동(2) → 식이(3) → 생활(4).
+   ============================================================================ */
+(function (global) {
+  'use strict';
+
+  var PART_PRIORITY = { '체형': 1, '운동': 2, '식이': 3, '생활': 4 };
+
+  // ── 체질 규칙(4) : 운동 강도·식이·발한 방향 ────────────────────────────
+  // 각 체질 → 운동(체질)·식이·생활(사우나) 실행안. category 는 파트너 매칭 키.
+  var CONSTITUTION_RULES = {
+    taeeum: { // 태음형(가안): 대사 느려 체중 증가 경향, 한출쾌연(땀나야 개운)
+      items: [
+        { part: '운동', action: '가벼운 유산소 자주 하기', category: 'exercise',
+          reason: '태음인은 대사가 느리고 체중이 늘기 쉬운 경향(학술 근거 대기)',
+          why: '천천히 오래 걷거나 가벼운 유산소를 자주 곁들이면 컨디션 관리에 도움이 될 수 있어요.' },
+        { part: '식이', action: '식이섬유 챙기기', category: 'food',
+          reason: '소화력은 강하나 정체·부종 경향, 식이섬유 보충 유익',
+          why: '식이섬유가 풍부한 식단을 곁들이는 습관을 관리 제안으로 참고할 만해요.' },
+        { part: '생활', action: '주기적으로 가볍게 땀 내기', category: 'sauna',
+          reason: '한출쾌연 — 땀을 내야 개운함을 느끼는 경향',
+          why: '가벼운 사우나로 주기적으로 땀을 내면 개운함을 느끼는 데 참고가 될 수 있어요.' }
+      ]
+    },
+    soyang: { // 소양형(가안): 열 체질, 위열·상실하허
+      items: [
+        { part: '운동', action: '하체 위주 균형 운동', category: 'exercise',
+          reason: '상실하허 — 상체 발달·하체 약화 경향',
+          why: '하체를 함께 쓰는 균형 운동을 곁들이면 컨디션 관리에 참고가 될 수 있어요.' },
+        { part: '식이', action: '수분·채소 넉넉히', category: 'food',
+          reason: '위열·열 체질 경향, 열을 식히는 식이 유익',
+          why: '수분과 채소를 넉넉히 곁들이는 식습관을 관리 제안으로 참고할 만해요.' },
+        { part: '생활', action: '과열 피하는 가벼운 땀', category: 'sauna',
+          reason: '열 체질이라 고온 장시간 발한은 지양',
+          why: '오래 뜨겁게보다 짧고 가볍게 땀 내는 방식이 더 잘 맞을 수 있어요.' }
+      ]
+    },
+    taeyang: { // 태양형(가안): 상체(폐대간소) 발달
+      items: [
+        { part: '운동', action: '하체·안정 중심 움직임', category: 'exercise',
+          reason: '상체 발달·하체 상대 약화 경향',
+          why: '하체와 안정성을 키우는 움직임을 곁들이면 균형 관리에 참고가 될 수 있어요.' },
+        { part: '식이', action: '담백한 균형 식단', category: 'food',
+          reason: '기운이 위로 몰리는 경향, 담담한 식이 유익',
+          why: '자극이 적고 담백한 균형 식단을 관리 제안으로 참고할 만해요.' },
+        { part: '생활', action: '무리 없는 가벼운 이완', category: 'sauna',
+          reason: '과도한 발한보다 이완 위주 권장',
+          why: '가볍게 몸을 데우고 이완하는 습관을 참고해볼 만해요.' }
+      ]
+    },
+    soeum: { // 소음형(가안): 신대비소, 냉증·소화 예민, 땀=기력손실
+      items: [
+        { part: '운동', action: '몸을 데우는 저강도 운동', category: 'exercise',
+          reason: '냉증 경향, 저강도로 순환을 돕는 편이 유익',
+          why: '몸을 천천히 데우는 저강도 운동이 컨디션 관리에 도움이 될 수 있어요.' },
+        { part: '식이', action: '소화 편한 따뜻한 식이', category: 'food',
+          reason: '소화기 예민·냉증 경향',
+          why: '소화가 편하고 따뜻한 식단을 곁들이는 습관을 관리 제안으로 참고할 만해요.' },
+        { part: '생활', action: '과한 발한은 피하기', category: 'sauna',
+          reason: '땀이 기력 손실로 이어지기 쉬운 경향 → 강한 발한 지양',
+          why: '땀을 과하게 빼기보다 가볍게 몸을 데우는 정도가 더 잘 맞을 수 있어요.' }
+      ]
+    }
+  };
+
+  // ── 체형 규칙(6) : 정렬 정상화 실행안(우선순위 최상) ───────────────────
+  // 체형은 '먼저 잡고 가는' 관리라 part='체형'(우선순위 1)로 최상단 배치.
+  var BODYTYPE_RULES = {
+    kyphoLordosis: { // 후만-전만 = 요추전만·흉추후만 (대표님 예시)
+      part: '체형', action: '골반·요추 정렬 먼저 잡기 — 필라테스', category: 'exercise',
+      reason: '골반 전방경사로 요추 과전만 + 등 상부 굽음 경향(Kendall/Neumann 근거 대기)',
+      why: '필라테스로 골반과 허리 정렬을 먼저 잡아가는 방향을 참고 습관으로 제안해요.'
+    },
+    flatBack: {
+      part: '체형', action: '허리 곡선 회복 움직임', category: 'exercise',
+      reason: '골반 후방경사로 허리 곡선이 평평해진 경향',
+      why: '허리의 자연스러운 곡선을 되살리는 움직임을 참고 습관으로 제안해요.'
+    },
+    swayBack: {
+      part: '체형', action: '골반 중립·코어 정렬', category: 'exercise',
+      reason: '골반·흉곽 전방 이동 + 등 상부 후만(현대인 흔한 패턴)',
+      why: '골반을 중립으로 두고 코어 정렬을 잡는 움직임을 참고 습관으로 제안해요.'
+    },
+    forwardHead: { // 거북목
+      part: '체형', action: '목·등 상부 정렬 풀기', category: 'exercise',
+      reason: '등 상부 굽음 + 목 과신전으로 머리 전방 돌출 경향',
+      why: '목과 등 상부의 긴장을 풀어 정렬을 잡는 움직임을 참고 습관으로 제안해요.'
+    },
+    asymmetry: {
+      part: '체형', action: '좌우 균형 맞추기', category: 'exercise',
+      reason: '짝다리·편측 습관 누적으로 좌우 비대칭 경향',
+      why: '좌우 균형을 맞추는 움직임과 생활 습관 점검을 참고 제안으로 살펴볼 만해요.'
+    },
+    ideal: {
+      part: '체형', action: '지금 정렬 유지하기', category: 'exercise',
+      reason: '비교적 이상적 정렬 — 유지 관리 위주',
+      why: '지금의 좋은 정렬을 유지하는 가벼운 움직임을 참고 습관으로 제안해요.'
+    }
+  };
+
+  /**
+   * 체질 + 체형 → 실행안 리스트(카드 순서대로 정렬).
+   * @param {string} constitution  'taeeum'|'soyang'|'taeyang'|'soeum'
+   * @param {string} bodyType      'kyphoLordosis'|'flatBack'|'swayBack'|'forwardHead'|'asymmetry'|'ideal'
+   * @returns {Array<{part,action,category,reason,why,priority}>}
+   */
+  function getWellnessRecommendations(constitution, bodyType) {
+    var recs = [];
+    var body = BODYTYPE_RULES[bodyType];
+    if (body) recs.push(body);                       // 체형(우선순위 1)
+    var con = CONSTITUTION_RULES[constitution];
+    if (con) recs = recs.concat(con.items);          // 운동·식이·생활
+    // 우선순위 부여 후 안정 정렬(체형→운동→식이→생활)
+    return recs
+      .map(function (r) { return Object.assign({}, r, { priority: PART_PRIORITY[r.part] || 99 }); })
+      .sort(function (a, b) { return a.priority - b.priority; });
+  }
+
+  global.CONSTITUTION_RULES = CONSTITUTION_RULES;
+  global.BODYTYPE_RULES = BODYTYPE_RULES;
+  global.getWellnessRecommendations = getWellnessRecommendations;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+/* ───────── */
+
+/* ============================================================================
+   TINAM 웰니스 유형 테스트 · 웜 에디토리얼 데모 (순수 JS, 빌드 불필요)
+   ----------------------------------------------------------------------------
+   - 랜딩(#site) ↔ 설문 앱(#app) 전환 + 스크롤 리빌.
+   - 실제 설문: survey/sasang.js(체질 24) + survey/posture.js(체형 14) → 2파트 순차.
+   - 실제 채점: scoreSasang/scorePosture → 체질 유형(색·동물) + 체형 리포트.
+   - 색·동물·유형명·추천: survey/mapping.js · recommend.js · partners.js(확정/가안).
+   ⚠️ 판정 위치=프론트(MVP). 실서비스 전환 시 /api/score 이관 전제(체질 로직 은닉).
+   ============================================================================ */
+
+// ── 유형별 라인아트 상징(이모지 대체) — 키=체질 은닉키 ─────────────────────
+const SYMBOLS = {
+  taeyang: `<svg viewBox="0 0 80 80"><path d="M40 22 C34 22, 30 27, 30 33 C30 37, 33 40, 40 42 C47 40, 50 37, 50 33 C50 27, 46 22, 40 22 Z"/><path d="M50 32 L59 30 L50 36"/><circle cx="44" cy="31" r="1.4"/><path d="M40 42 L12 29 C21 41, 25 45, 34 48"/><path d="M40 42 L68 29 C59 41, 55 45, 46 48"/><path d="M34 48 L40 63 L46 48"/></svg>`,
+  soyang: `<svg viewBox="0 0 80 80"><path d="M22 20 L30 34 M22 20 C22 28, 24 32, 30 34"/><path d="M58 20 L50 34 M58 20 C58 28, 56 32, 50 34"/><path d="M30 34 C24 40, 24 48, 40 60 C56 48, 56 40, 50 34 C46 31, 34 31, 30 34 Z"/><circle cx="40" cy="52" r="1.6"/><path d="M33 43 L36 44 M47 43 L44 44"/></svg>`,
+  taeeum: `<svg viewBox="0 0 80 80"><circle cx="26" cy="28" r="7"/><circle cx="54" cy="28" r="7"/><path d="M20 44 C20 32, 29 26, 40 26 C51 26, 60 32, 60 44 C60 56, 51 64, 40 64 C29 64, 20 56, 20 44 Z"/><ellipse cx="40" cy="50" rx="10" ry="8"/><circle cx="34" cy="42" r="1.6"/><circle cx="46" cy="42" r="1.6"/><path d="M37 48 L43 48 L40 51 Z"/></svg>`,
+  soeum: `<svg viewBox="0 0 80 80"><path d="M26 22 L32 37 M26 22 C26 30, 28 34, 32 37"/><path d="M54 22 L48 37 M54 22 C54 30, 52 34, 48 37"/><circle cx="40" cy="46" r="17"/><path d="M35 44 L37 45 M45 44 L43 45"/><path d="M38 50 L42 50 L40 52 Z"/><path d="M18 47 L30 49 M18 53 L30 51 M62 47 L50 49 M62 53 L50 51"/></svg>`,
+};
+
+// 결과 리포트 섹션 EN 라벨(웜 룩 모노 키)
+const SECTION_EN = { 성격: 'Personality', 음식: 'Food', 운동: 'Movement', 체형: 'Body', 환경: 'Environment' };
+// 추천 파트 EN 라벨
+const PART_EN = { 체형: 'Body', 운동: 'Movement', 식이: 'Food', 생활: 'Lifestyle' };
+
+// ── 응답값 척도별 옵션 ─────────────────────────────────────────────────────
+const OPTIONS = {
+  ternary: [['네, 그래요', 1], ['잘 모르겠어요', 0], ['아니에요', -1]],
+  freq4: [['전혀 없어요', 0], ['가끔요', 1], ['자주요', 2], ['항상요', 3]],
+};
+const OPT_KEYS = ['A', 'B', 'C', 'D'];
+const PART_LABEL = { sasang: '파트 1 · 체질', posture: '파트 2 · 자세' };
+
+// 체질(24) → 자세(14) 순차 통합 흐름
+const FLOW = []
+  .concat(SASANG_QUESTIONS.map(q => ({ q, part: 'sasang' })))
+  .concat(POSTURE_QUESTIONS.map(q => ({ q, part: 'posture' })));
+
+let answers = new Array(FLOW.length).fill(null);
+let qIndex = 0;
+let currentJudgment = null;      // { constitution, bodyType }
+let currentConstitution = null;  // mapping.js 유형 객체
+
+const pad = n => String(n).padStart(2, '0');
+
+// ── 랜딩 ↔ 설문 전환 ──────────────────────────────────────────────────────
+const siteEl = document.getElementById('site');
+const appEl = document.getElementById('app');
+const progress = document.getElementById('progress');
+
+function startTest() {
+  answers = new Array(FLOW.length).fill(null);
+  qIndex = 0;
+  siteEl.hidden = true;
+  appEl.hidden = false;
+  goto('screen-intro');
+  window.scrollTo(0, 0);
+}
+function goHome() {
+  appEl.hidden = true;
+  siteEl.hidden = false;
+  progress.hidden = true;
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', startTest));
+document.querySelectorAll('[data-home]').forEach(b => b.addEventListener('click', goHome));
+
+// ── 화면 전환 ────────────────────────────────────────────────────────────
+function goto(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('is-active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('is-active');
+  progress.hidden = id !== 'screen-quiz';
+  window.scrollTo(0, 0);
+}
+
+// ── 퀴즈 진행 ────────────────────────────────────────────────────────────
+const qEl = document.getElementById('quiz-q');
+const optsEl = document.getElementById('quiz-opts');
+const barEl = document.getElementById('progress-bar');
+const countEl = document.getElementById('quiz-count');
+const partEl = document.getElementById('quiz-part');
+
+function renderQuestion() {
+  const item = FLOW[qIndex];
+  const scale = item.q.scale;
+  partEl.textContent = `${PART_LABEL[item.part]} · ${item.q.area}`;
+  qEl.textContent = item.q.text;
+  countEl.textContent = `${pad(qIndex + 1)} / ${pad(FLOW.length)}`;
+  barEl.style.width = `${(qIndex / FLOW.length) * 100}%`;
+  optsEl.innerHTML = '';
+  OPTIONS[scale].forEach(([label, value], i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'quiz-opt';
+    if (answers[qIndex] === value) btn.classList.add('is-selected');
+    btn.innerHTML = `<span class="quiz-opt__key">${OPT_KEYS[i]}</span><span>${label}</span>`;
+    btn.addEventListener('click', () => selectAnswer(value));
+    optsEl.appendChild(btn);
+  });
+}
+let advancing = false;   // 연타로 문항 건너뛰기 방지
+function selectAnswer(value) {
+  if (advancing) return;
+  advancing = true;
+  answers[qIndex] = value;
+  barEl.style.width = `${((qIndex + 1) / FLOW.length) * 100}%`;
+  setTimeout(() => {
+    advancing = false;
+    if (qIndex < FLOW.length - 1) { qIndex++; renderQuestion(); }
+    else finishQuiz();
+  }, 200);
+}
+document.getElementById('btn-start').addEventListener('click', () => {
+  qIndex = 0; renderQuestion(); goto('screen-quiz');
+});
+document.getElementById('btn-quiz-back').addEventListener('click', () => {
+  if (qIndex > 0) { qIndex--; renderQuestion(); }
+  else goto('screen-intro');
+});
+
+// ── 분석 로딩 → 채점 → 결과 ──────────────────────────────────────────────
+function finishQuiz() {
+  goto('screen-loading');
+  setTimeout(() => { computeAndRenderResult(); goto('screen-result'); }, 1600);
+}
+
+function computeAndRenderResult() {
+  const nSasang = SASANG_QUESTIONS.length;
+  const sasangAns = answers.slice(0, nSasang).map(v => v == null ? 0 : v);
+  const postureAns = answers.slice(nSasang).map(v => v == null ? 0 : v);
+  const sas = scoreSasang(sasangAns);
+  const pos = scorePosture(postureAns);
+  currentJudgment = { constitution: sas.top, bodyType: pos.top };
+  renderResult(sas, pos);
+}
+
+function renderResult(sas, pos) {
+  const c = getConstitutionType(sas.top);
+  const bt = getBodyTypeLabel(pos.top);
+  currentConstitution = c;
+
+  const card = document.getElementById('result-card');
+  card.className = `result-card result-card--${c.theme}`;
+  document.getElementById('r-symbol').innerHTML = SYMBOLS[c.key] || '';
+  document.getElementById('r-color').textContent = `${c.animal} · ${c.color}`;
+  document.getElementById('r-title').textContent = c.name;
+  document.getElementById('r-summary').textContent = c.summary;
+  document.getElementById('r-tags').innerHTML = c.tags.map(x => `<span># ${x}</span>`).join('');
+
+  // 판정 확률(단정 금지 · 1·2위 병기)
+  const second = getConstitutionType(sas.second);
+  const confidence = sectionCard('Confidence', '유형 확률',
+    `<b>${c.name}</b>에 가까울 확률이 가장 높게 나왔어요 (${sas.scores[sas.top]}%). 그 다음은 <b>${second ? second.name : '-'}</b>(${sas.scores[sas.second]}%)이고요. 두 유형의 성향을 함께 참고해 보세요.`,
+    true);
+
+  // 성격·음식·운동(체질) → 체형(자세) → 환경(체질)
+  const body = ['성격', '음식', '운동'].map(k => sectionCard(SECTION_EN[k], k, c.sections[k].body));
+  const bodyReport = sectionCard('Body', `체형 리포트 · ${bt.label}`,
+    `${bt.desc}<br /><b>이 체형 경향이 가장 높게 나타났어요 (${pos.scores[pos.top]}%).</b>`);
+  const env = sectionCard(SECTION_EN['환경'], '환경(수면)', c.sections['환경'].body);
+
+  document.getElementById('r-sections').innerHTML =
+    confidence + body.join('') + bodyReport + env;
+}
+
+function sectionCard(enKey, title, bodyHtml, accent) {
+  return `
+    <div class="r-section${accent ? ' r-section--accent' : ''}">
+      <p class="r-section__key">${enKey}</p>
+      <h3>${title}</h3>
+      <p>${bodyHtml}</p>
+    </div>`;
+}
+
+// ── 맞춤 추천(제휴 연결) ─────────────────────────────────────────────────
+function renderRecommend() {
+  const c = currentConstitution;
+  const j = currentJudgment;
+  document.getElementById('rec-type-badge').textContent =
+    c ? `${c.name} · 맞춤 추천` : '나의 웰니스 유형 맞춤 추천';
+
+  const recs = (j && typeof getWellnessRecommendations === 'function')
+    ? getWellnessRecommendations(j.constitution, j.bodyType) : [];
+
+  const groupsHtml = recs.map(rec => {
+    const partners = (typeof getPartnersByCategory === 'function')
+      ? getPartnersByCategory(rec.category) : [];
+    return `
+    <div class="rec-group">
+      <p class="rec-group__title">${PART_EN[rec.part] || ''} · ${rec.part} — ${rec.action}</p>
+      <p class="rec-group__why">${rec.why}</p>
+      ${partners.map(p => `
+        <div class="partner-card">
+          <div>
+            <p class="partner-card__name">${p.name}<span class="partner-card__tag">${p.disclosure}</span></p>
+            <p class="partner-card__desc">${p.desc}</p>
+          </div>
+          <button class="partner-card__btn" data-partner-url="${p.url}" type="button">예약하러 가기</button>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+
+  const notice = `
+    <p class="rec-notice">
+      · 위 파트너·링크는 광고/제휴 목적의 <b>예시</b>이며, 실제 제휴가 확정되면 예약 페이지로 연결돼요.<br />
+      · 본 결과와 추천은 참고용 유형 분류이며 <b>의료 행위가 아닙니다.</b>
+    </p>`;
+
+  document.getElementById('rec-groups').innerHTML = (groupsHtml || '') + notice;
+  document.querySelectorAll('[data-partner-url]').forEach(b =>
+    b.addEventListener('click', () => {
+      const url = b.dataset.partnerUrl;
+      if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    }));
+}
+document.getElementById('btn-recommend').addEventListener('click', () => {
+  renderRecommend(); goto('screen-recommend');
+});
+document.getElementById('btn-back-result').addEventListener('click', () => goto('screen-result'));
+document.getElementById('btn-restart').addEventListener('click', () => {
+  answers = new Array(FLOW.length).fill(null);
+  qIndex = 0; goto('screen-intro');
+});
+
+// ── 공유 모달 ────────────────────────────────────────────────────────────
+const modal = document.getElementById('share-modal');
+function openShare() { modal.classList.add('is-open'); }
+function closeShare() { modal.classList.remove('is-open'); }
+document.getElementById('btn-share').addEventListener('click', openShare);
+document.getElementById('btn-share-close').addEventListener('click', closeShare);
+modal.addEventListener('click', e => { if (e.target === modal) closeShare(); });
+document.querySelectorAll('[data-demo-login]').forEach(b =>
+  b.addEventListener('click', () => {
+    alert(`[데모] ${b.dataset.demoLogin === 'kakao' ? '카카오' : 'Google'} 로그인 화면이 여기서 열립니다.\n(실제 연동은 이후 단계)`);
+    closeShare();
+  }));
+
+// ── 랜딩 스크롤 리빌 ──────────────────────────────────────────────────────
+(function () {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reveals = document.querySelectorAll('.reveal');
+  if (reduce || !('IntersectionObserver' in window)) {
+    reveals.forEach(el => el.classList.add('is-visible'));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) { entry.target.classList.add('is-visible'); io.unobserve(entry.target); }
+    });
+  }, { threshold: 0.14 });
+  reveals.forEach(el => io.observe(el));
+})();
+
+</script>
+</body>
+</html>
