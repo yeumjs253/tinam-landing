@@ -568,6 +568,11 @@ html.js #site .reveal.is-visible{opacity:1;transform:none}
 #app .r-diagram-caption{display:flex;justify-content:center;gap:60px;margin-top:2px;font-size:11.5px;color:var(--ink-soft)}
 #app .r-diagram-caption span.mine{color:var(--ink);font-weight:650}
 #app .r-exlabel{font-family:var(--font-mono);font-size:11px;color:var(--clay);margin:14px 0 4px;font-weight:600}
+/* 운동 삽화 컷 — PDF 조판 규칙(정사각 타일·contain·얇은 테두리)을 웹 치수로 옮긴 것.
+   컷 수와 무관하게 타일 크기 고정(2026-08-29 대표 지시). 3컷이 390px 카드 안에 한 줄로 들어간다. */
+#app .r-cuts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 2px}
+#app .r-cuts figure{margin:0;flex:0 0 84px;width:84px}
+#app .r-cuts img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:#fff;border:1px solid var(--line);border-radius:8px}
 #app .result-actions{margin-top:32px;display:grid;gap:12px}
 #app .result-actions .btn{justify-content:center}
 
@@ -1331,7 +1336,22 @@ html.js #site .reveal.is-visible{opacity:1;transform:none}
 
   global.TYPES = TYPES;
   global.BODYTYPE_LABELS = BODYTYPE_LABELS;
+  // ── 운동 → 삽화 타일 매핑 ────────────────────────────────────────────────
+  // 출처: docs/design/exercise-figures/README.md §매핑 완료(2026-08-16, 대표 전수 확인 · 불일치 0건).
+  // 컷 순서는 동작 순서다. 'ex-prone-legraise-a'는 2026-08-29 대표 지시로 제외(우측 컷만 사용).
+  // 이상적 체형은 운동 자체가 없으므로 항목도 없다(의도된 공백).
+  var EXERCISE_FIGURES = {
+    '배로 숨 쉬기': ['ex-breathing'],
+    '문틀에 한쪽 팔 대고 돌리기': ['ex-pecminor-doorway-a', 'ex-pecminor-doorway-b', 'ex-pecminor-doorway-c'],
+    '벽에 팔뚝 대고 밀어 올리기': ['ex-wallslide'],
+    '서서 다리 올리고 숙이기': ['ex-hamstring-standing'],
+    '배에 쿠션 대고 다리 들기': ['ex-prone-cushion'],
+    '앉아서 상체 돌리기': ['ex-seated-rotation-a', 'ex-seated-rotation-b'],
+    '엎드려 다리 들기': ['ex-prone-legraise-b']
+  };
+
   global.BODYTYPE_DIAGRAMS = BODYTYPE_DIAGRAMS;
+  global.EXERCISE_FIGURES = EXERCISE_FIGURES;
   global.HANGSIM_DEF = HANGSIM_DEF;
   global.getType = getType;
   global.getBodyTypeLabel = getBodyTypeLabel;
@@ -1960,9 +1980,17 @@ function renderResult(core, pos) {
   const diagramCaption = isIdeal
     ? `<div class="r-diagram-caption"><span class="mine">이상적</span></div>`
     : `<div class="r-diagram-caption"><span>이상적</span><span class="mine">${bt.label.replace(' 체형', '')}</span></div>`;
+  // 운동 삽화 — 컷 순서가 곧 동작 순서다(매핑 근거: exercise-figures/README.md)
+  const exCuts = title => {
+    const files = (typeof EXERCISE_FIGURES !== 'undefined' && EXERCISE_FIGURES[title]) || [];
+    if (!files.length) return '';
+    return `<div class="r-cuts">` +
+      files.map(f => `<figure><img src="img-v2/${f}.png" alt="" loading="lazy"></figure>`).join('') +
+      `</div>`;
+  };
   const exHtml = bt.운동 ? (
     `<p class="r-exlabel">운동 · 이 순서로 하세요</p>` +
-    bt.운동.map(ex => `<p><b>${ex.title}</b> — ${ex.role}<br>${ex.body}<br><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-soft)">${ex.reps}</span></p>`).join('')
+    bt.운동.map(ex => `<p><b>${ex.title}</b> — ${ex.role}<br>${ex.body}<br><span style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-soft)">${ex.reps}</span></p>` + exCuts(ex.title)).join('')
   ) : '';
   const bodyReport = sectionCard('Body', `체형 유형 결과 · ${bt.label}`,
     `<div class="r-diagram">${diagram}</div>${diagramCaption}` +
