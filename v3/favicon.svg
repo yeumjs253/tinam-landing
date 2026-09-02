@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 2026-09-02: 시그니처 도형(중력선+호+사분면) 제거 지시에 따라 워드마크 T로 교체 -->
   <rect width="64" height="64" rx="14" fill="#0C0B0A"/>
-  <line x1="38" y1="8" x2="38" y2="56" stroke="#C8B9A2" stroke-width="2"/>
-  <path d="M38 12 C 43 25, 46 38, 41 50" stroke="#C8B9A2" stroke-width="2" fill="none"/>
-  <ellipse cx="27" cy="40" rx="2.4" ry="3.4" fill="#EAE7E1"/>
+  <text x="32" y="45" text-anchor="middle" fill="#C8B9A2"
+        font-family="Cormorant Garamond, Times New Roman, serif" font-size="42" font-weight="400">T</text>
 </svg>
