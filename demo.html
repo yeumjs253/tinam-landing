@@ -1436,8 +1436,14 @@ html.js #site .reveal.is-visible{opacity:1;transform:none}
   function full(key) { var c = { blue: 0, red: 0, green: 0, yellow: 0 }; c[key] = 1; return c; }
   function half2(a, b) { var c = { blue: 0, red: 0, green: 0, yellow: 0 }; c[a] = 0.5; c[b] = 0.5; return c; }
   var ZERO = { blue: 0, red: 0, green: 0, yellow: 0 };
-  var GATE_POINT = 8; // 잠정치 — survey/sasang.js 헤더 ⑥ 참조
-  function gate(hit) { return hit ? { blue: 0, red: 0, green: 0, yellow: GATE_POINT } : ZERO; }
+  // 태양 게이트 = 가산점이 아니라 조건(지윤 확정 2026-09-08). 네 문항 전부 '예'라야 후보.
+  // 문항 자체는 점수를 주지 않는다. 상세는 survey/sasang.js 헤더 ⑥·⑧.
+  // 문서화된 3쌍에 안 걸리는 동점 — 진료 체감 비율 순(흔한 체질 우선, 태양은 언제나 마지막).
+  var TIE_FALLBACK_ORDER = ['green', 'red', 'blue', 'yellow']; // 태음·소양·소음·태양
+
+  var GATE_IDS = ['B2-5', 'B2-6', 'B2-7', 'B2-8'];
+  var GATE_REQUIRED = 4;
+  function gate() { return ZERO; }
 
   var CORE_QUESTIONS = [
     // ── A 파트 11문항 ──
@@ -1539,7 +1545,18 @@ html.js #site .reveal.is-visible{opacity:1;transform:none}
       { value: 1, label: '예', credit: gate(true) }, { value: 2, label: '아니오', credit: gate(false) } ]}
   ];
 
-  // 채점: 문항별 credit 누적 → ②이중계상 방지(A8↔B2-1) → 백분율 → ⑦동점 규칙
+  // 중립 기준선(헤더 ⑧) — 성향 없는 응답자가 각 체질에서 받는 기대 점수. 문항표에서 계산한다.
+  var NEUTRAL = (function () {
+    var n = { blue: 0, red: 0, green: 0, yellow: 0 };
+    CORE_QUESTIONS.forEach(function (q) {
+      q.options.forEach(function (o) {
+        TYPE_KEYS.forEach(function (k) { n[k] += o.credit[k] / q.options.length; });
+      });
+    });
+    return n;
+  })();
+
+  // 채점: credit 누적 → ②이중계상 방지(A8↔B2-1) → ⑥게이트 조건 → ⑧정규화 → ⑦동점 규칙
   function scoreCore(answers) {
     var totals = { blue: 0, red: 0, green: 0, yellow: 0 };
     var byId = {};
@@ -1558,9 +1575,21 @@ html.js #site .reveal.is-visible{opacity:1;transform:none}
       else if (b21 === 1 || b21 === 2) { totals[a8Key] -= 1; totals[b21 === 1 ? 'yellow' : 'red'] -= 1; }
     }
 
-    var sum = totals.blue + totals.red + totals.green + totals.yellow;
+    // ⑥ 태양 게이트 — 조건. 네 문항 전부 '예'라야 태양 후보가 된다.
+    var gateHits = 0;
+    GATE_IDS.forEach(function (id) { if (byId[id] === 1) gateHits++; });
+    var yellowEligible = (gateHits >= GATE_REQUIRED);
+
+    // ⑧ 중립 기준선 정규화(음수는 0으로 자른다)
+    var norm = {};
+    TYPE_KEYS.forEach(function (k) { norm[k] = Math.max(0, totals[k]) / NEUTRAL[k]; });
+    if (!yellowEligible) { norm.yellow = 0; }
+
+    // 합산 순서를 정본(survey/sasang.js)과 같게 맞춘다 — 부동소수점 오차가 갈리면
+    // 반올림 경계에서 백분율이 0.1 어긋난다(실측).
+    var sum = norm.yellow + norm.red + norm.green + norm.blue;
     var ranked = TYPE_KEYS
-      .map(function (key) { return { key: key, score: totals[key], pct: sum > 0 ? Math.round((totals[key] / sum) * 1000) / 10 : 0 }; })
+      .map(function (key) { return { key: key, score: norm[key], pct: sum > 0 ? Math.round((norm[key] / sum) * 1000) / 10 : 0 }; })
       .sort(function (a, b) { return b.score - a.score; });
 
     var EPS = 1e-9;
@@ -1581,7 +1610,7 @@ html.js #site .reveal.is-visible{opacity:1;transform:none}
         });
         winner = g >= b ? 'green' : 'blue';
       } else {
-        winner = TYPE_KEYS.filter(function (k) { return k === ranked[0].key || k === ranked[1].key; })[0];
+        winner = TIE_FALLBACK_ORDER.filter(function (k) { return k === ranked[0].key || k === ranked[1].key; })[0];
       }
       if (winner && winner !== ranked[0].key) {
         var wIdx = ranked.map(function (r) { return r.key; }).indexOf(winner);
@@ -1593,7 +1622,7 @@ html.js #site .reveal.is-visible{opacity:1;transform:none}
     ranked.forEach(function (r) { scores[r.key] = r.pct; });
 
     return {
-      vector: [totals.blue, totals.red, totals.green, totals.yellow],
+      vector: [totals.blue, totals.red, totals.green, totals.yellow], gateHits: gateHits,
       scores: scores, ranked: ranked.map(function (r) { return { key: r.key, pct: r.pct }; }),
       top: ranked[0].key, second: ranked[1].key
     };
