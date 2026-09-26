@@ -1,1 +1,0 @@
-var e={terms:`1.3`,privacy:`1.3`,refund:`1.1`};export{e as t};
