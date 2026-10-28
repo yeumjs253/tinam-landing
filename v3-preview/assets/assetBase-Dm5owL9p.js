@@ -1,0 +1,1 @@
+var e=e=>`/tinam-landing/v3-preview/${e.replace(/^\//,``)}`;export{e as t};
